@@ -1,0 +1,38 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+### 环境变量
+@baseUrl = http://localhost:8088
+@contentType = application/json
+
+@token = eyJhbGciOiJIUzM4NCJ9.eyJyb2xlcyI6WyJST0xFX1VTRVIiLCJST0xFX01FUkNIQU5UIl0sInN1YiI6IjIiLCJpYXQiOjE3NDg3NDY5NDcsImV4cCI6MTc0ODgzMzM0N30.qYHz35Ef1c1XCO9PtQGS3BTZQ17hhfLe1VHzWPnpDOg1Vw_lB2ToI0fJezTRfcf9
+
+### 创建或更新Token
+POST {{baseUrl}}/api/v1/tokens/create-or-update
+Authorization: Bearer {{token}}
+Content-Type: {{contentType}}
+
+{
+    "name": "test-merchant"
+}
+
+返回：
+
+{
+  "code": 0,
+  "msg": "success",
+  "data": {
+    "id": 4,
+    "token": "api_j20BI-gYxp2nlQduWgeezoE5TsOEBboZ",
+    "userId": 2,
+    "name": "test-merchant",
+    "lastUsedAt": null,
+    "isActive": true,
+    "createdAt": "2025-06-01T11:02:41",
+    "updatedAt": "2025-06-01T11:02:53.693118",
+    "version": 1,
+    "isDeleted": false
+  }
+}

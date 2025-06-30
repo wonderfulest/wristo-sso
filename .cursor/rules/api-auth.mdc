@@ -1,0 +1,73 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+### 环境变量
+@baseUrl = http://localhost:8088
+@contentType = application/json
+
+### 用户注册
+POST {{baseUrl}}/auth/register
+Content-Type: {{contentType}}
+
+{
+    "username": "testuser",
+    "password": "123456",
+    "email": "test@example.com"
+}
+
+Response:
+{
+  "code": 0,
+  "msg": "success",
+  "data": "注册成功"
+}
+
+
+### 用户登录
+POST {{baseUrl}}/auth/login/email
+Content-Type: {{contentType}}
+
+{
+    "email": "testuser@example.com",
+    "password": "123456"
+}
+
+Response:
+
+{
+  "code": 0,
+  "msg": "success",
+  "data": {
+    "token": "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJ0ZXN0dXNlciIsImlhdCI6MTc0ODM1MDQ5NywiZXhwIjoxNzQ4NDM2ODk3fQ.7VW9focLfj7aqXKauhGqD5_Qx0Y4kyL_VzRGMdckj1rrDDatRXi50l4MEnMGXaqPoLSU4br8TMYsxF1aneZLzw",
+    "userInfo": {
+      "id": 2,
+      "username": "testuser",
+      "nickname": null,
+      "email": "test@example.com",
+      "phone": null,
+      "avatar": null,
+      "status": null,
+      "createdAt": "2025-05-27 19:22:55",
+      "updatedAt": "2025-05-27 19:22:55",
+      "lastLoginTime": null,
+      "lastLoginIp": null,
+      "isDeleted": "0"
+    }
+  }
+}
+
+
+### 用户签退
+
+POST {{baseUrl}}/api/auth/logout
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+返回：
+{
+  "code": 0,
+  "msg": "success",
+  "data": "退出成功"
+}

@@ -1,0 +1,12 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+
+统一使用 src/config/axios.ts 发送 请求
+
+响应数据统一格式为 {"code":-1,"message":"trial not found","data":null}
+
+当code为0时，表示成功；
+非0时，表示失败，进行错误提示

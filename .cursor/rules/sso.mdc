@@ -1,0 +1,138 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# SSO 统一前端登录/注册
+
+1. 避免重复建设
+- 多个系统各自实现登录/注册页面会导致开发、维护、测试工作重复；
+- 前端样式、逻辑差异可能引发用户体验不一致。
+
+2. 提升用户体验
+- 统一风格、统一流程，用户在多个子系统之间切换不会感到割裂；
+- 登录后直接跳转目标系统，无需重新认证。
+
+3. 利于权限与认证逻辑集中管理
+- 登录/注册页面中可能涉及验证码、密码策略、OAuth、短信验证等复杂逻辑；
+- 集中后这些机制更易统一更新和升级（如接入扫码登录、人脸识别等）。
+
+4. 便于安全管控
+- 登录页是攻击的重点对象之一，集中化可加强防护（如滑动验证码、设备指纹、行为风控）；
+- 注册页也涉及风控和反作弊，统一后更便于部署统一策略。
+
+✅ 常见的统一实现方式：
+| 模式                                 | 描述                                                                         |
+| ---------------------------------- | -------------------------------------------------------------------------- |
+| **独立前端 Web 应用**                    | SSO 提供一个独立的 login/signup Web 页面（如 `https://sso.xxx.com/login`），所有子系统重定向到这里 |                       |
+| **OAuth2 / OpenID Connect + 跳转协议** | 各系统作为 OAuth Client 重定向到统一授权页，登录后带 token 跳转回去                               |
+
+✅ 开发建议
+- 前端统一代码库，模块化登录/注册/找回密码等流程；
+- UI 层支持皮肤/配置（如不同品牌子系统）；
+- 登录页配置支持从 URL 参数或后端 API 获取跳转目标、来源系统名；
+- API 接口建议统一走 SSO 服务网关（如 /api/sso/login, /api/sso/register）；
+
+✅ 总结一句话：
+
+登录/注册作为 SSO 的核心功能，强烈建议集中建设前端页面，实现逻辑和风格统一，避免重复开发与维护。
+
+# sso系统如何为其他系统提供鉴权
+
+用户在 sso.wristo.io 登录后，如何安全地跳转并携带 token 给 dashboard.wristo.io、merchant.wristo.io 等子系统，是 SSO 的关键设计问题。
+
+✅ 推荐的方式：基于 OAuth2 / OpenID Connect（OIDC）
+
+1. SSO 作为授权服务器（Authorization Server）
+
+用户访问 dashboard.wristo.io → 检查未登录 → 重定向至 sso.wristo.io/login?redirect_uri=https://dashboard.wristo.io/callback
+
+2. 登录成功后，SSO 签发一个带有 token 的跳转 URL：
+
+https://dashboard.wristo.io/callback?code=abc123
+
+3. dashboard 后端通过 code 向 SSO 后台接口（Token Endpoint）换取 Access Token：
+
+```
+POST https://sso.wristo.io/oauth/token
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=authorization_code
+code=abc123
+client_id=dashboard
+client_secret=xxx
+redirect_uri=https://dashboard.wristo.io/callback
+```
+
+返回：
+
+```
+{
+  "access_token": "eyJhbGci...",
+  "expires_in": 3600,
+  "refresh_token": "....",
+  "token_type": "Bearer",
+  "id_token": "...."
+}
+```
+
+子系统开始使用 token 进行用户鉴权。
+
+✅ 核心组成模块
+
+| 模块                         | 说明                                |
+| -------------------------- | --------------------------------- |
+| **SSO 登录页**                | 统一登录页面，用户输入账号密码，或扫码登录等            |
+| **Authorization Endpoint** | 接收来自 dashboard 等系统的跳转请求，登录成功后回跳   |
+| **Token Endpoint**         | 子系统拿 `code` 来换取 Access Token      |
+| **User Info Endpoint**     | 子系统用 Access Token 获取用户信息（如头像、角色等） |
+
+✅ 子系统的接入逻辑简化版
+
+1. 用户访问 dashboard.wristo.io
+2. 检查是否已登录
+   - 没登录 → 重定向到 SSO
+3. SSO 登录成功 → redirect 回 dashboard（带 code）
+4. dashboard 后端 → SSO 换取 token
+5. token 存入 cookie / localStorage
+6. 开始渲染页面
+
+
+✅ Token 格式（通常是 JWT）
+
+```
+{
+  "sub": "user_id_123",
+  "email": "abc@wr.com",
+  "exp": 1712345678,
+  "roles": ["admin"],
+  "iss": "sso.wristo.io"
+}
+```
+
+- 子系统可以校验签名 + 解出用户信息
+- 可设置 token 过期、refresh token 等机制
+
+
+✅ 安全建议
+
+- 强制使用 HTTPS
+- 使用短时效 code 换 token，防止泄露
+- 不建议将 token 明文放在 URL 中（推荐通过后端换取 token）
+- 跨域通信时注意设置 SameSite=None; Secure 的 Cookie 策略
+
+
+✅ 替代方案（不推荐）
+
+Cookie 共享域方案（如 .wr.com）
+- 在顶级域上设置 Cookie（domain=.wr.com）使子域共享
+- 只能在同一主域下使用（如 sso.wr.com、dashboard.wr.com）
+- 不适用于跨主域（如 sso.wristo.io 与 merchant.partner.io）
+
+✅ 总结一句话：
+使用 OAuth2 + OpenID Connect，是现代 SSO 系统给多个子系统发放 token 的标准方式，安全、可扩展、被广泛采用（如 Google、GitHub 登录）。
+
+
+
+
+

@@ -1,0 +1,17 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+## 技术栈
+- 使用 vue3 + vite 构建
+- 使用 vue-router
+- 使用 Element-plus 
+
+## 版权
+
+- 所有页面上全部使用 英文
+- 所有页面上都不要出现 kzl, Kiezel，Wristo 等单词，统一使用 Wristo 代替
+
+
+
