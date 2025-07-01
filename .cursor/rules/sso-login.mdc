@@ -3,6 +3,31 @@ description:
 globs: 
 alwaysApply: false
 ---
+# SSO 时序图
+
+用户            dashboard前端       dashboard后端       SSO服务         用户信息服务
+│                  │                    │                 │                 │
+│── 访问 dashboard ─▶│                  │                 │                 │
+│                  │── 检查未登录 ─────▶│                 │                 │
+│                  │◀──── 重定向至 SSO 登录页（带redirect_uri） ─────────────┘
+│◀──── 跳转至 ─────│                    │                 │
+│    SSO 登录页（Authorization Endpoint）                │
+│                  │                    │                 │
+│── 输入用户名密码 →│                    │                 │
+│                  │                    │── 验证用户信息 ─▶│                 │
+│                  │                    │◀──── 登录成功 ──│                 │
+│◀──── 登录成功跳转 redirect_uri?code=abc123 ─────────────┘
+│                  │                    │                 │
+│                  │── code 发送给后端 ─▶│                 │
+│                  │                    │── POST /token（带 code） ────────▶│
+│                  │                    │                 │── 校验 code、生成 token ─▶│
+│                  │                    │                 │◀──────── 返回 access_token,id_token ──│
+│                  │                    │◀──── 返回 token ──────────────────│
+│◀──── 页面加载成功 │                    │                 │
+│                  │                    │── GET /userinfo（带 token） ─────▶│
+│                  │                    │◀──── 返回用户信息 ────────────────│
+│◀──── 渲染页面 │                    │                 │
+
 
 # sso系统如何为其他系统提供鉴权
 

@@ -11,6 +11,14 @@ export interface RegisterDto {
   roles?: string[]
 }
 
+export interface TokenResponse {
+  access_token: string
+  refresh_token?: string
+  expires_in: number
+  token_type: string
+  id_token?: string
+}
+
 export const login = (credentials: LoginCredentialsDto) : Promise<ApiResponse<LoginResponseData>> => {
   return instance.post('/public/auth/login/email', credentials)
 }
@@ -32,4 +40,9 @@ export const ssoLogin = (redirectUri: string, token: string): Promise<ApiRespons
       Authorization: `Bearer ${token}`
     }
   })
+}
+
+// SSO 回调换取 token
+export const exchangeCode = (code: string, client: string): Promise<ApiResponse<TokenResponse>> => {
+  return instance.post('/public/sso/token', { code, client })
 }

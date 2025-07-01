@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { login as loginApi, register as registerApi, logout as logoutApi } from '@/api/auth'
+import { getUserInfo } from '@/api/user'
 import { type UserInfo, type LoginResponseData, type ApiResponse } from '@/types/api'
 
 export const useUserStore = defineStore('user', {
@@ -35,6 +36,22 @@ export const useUserStore = defineStore('user', {
       localStorage.removeItem('token')
       localStorage.removeItem('userInfo')
       // 路由跳转请在组件中处理
+    },
+    async fetchUserInfo() {
+      if (!this.token) {
+        throw new Error('未登录')
+      }
+      const response = await getUserInfo()
+      if (response.data) {
+        this.userInfo = response.data
+        localStorage.setItem('userInfo', JSON.stringify(this.userInfo))
+        return response.data
+      }
+      throw new Error(response.msg || '获取用户信息失败')
+    },
+    setToken(token: string) {
+      this.token = token
+      localStorage.setItem('token', token)
     }
   }
 }) 
