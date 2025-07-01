@@ -25,17 +25,9 @@ const router = createRouter({
 
 // 路由守卫
 router.beforeEach((to, from, next) => {
-  console.log('from', from.path)
-  const userStore = useUserStore()
-  const requiresAuth = to.matched.some(record => record.meta.requiresAuth)
-
-  if (requiresAuth && !userStore.token) {
+  const token = localStorage.getItem('token')
+  if (!token && to.path !== '/login') {
     next('/login')
-  } else if (
-    userStore.token &&
-    (to.path === '/login' || to.path === '/register')
-  ) {
-    next('/')
   } else {
     next()
   }

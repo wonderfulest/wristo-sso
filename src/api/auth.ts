@@ -23,3 +23,13 @@ export const register =  (userData: RegisterDto) : Promise<ApiResponse<string>> 
 export const logout = async () : Promise<ApiResponse<string>> => {
   return instance.post('/public/auth/logout')
 }
+
+// SSO 登录下发 code
+export const ssoLogin = (redirectUri: string, token: string): Promise<ApiResponse<string>> => {
+  console.log('ssoLogin', redirectUri, token)
+  return instance.post('/public/sso/login', { redirectUri }, {
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  })
+}

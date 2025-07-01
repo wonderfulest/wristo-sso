@@ -51,25 +51,47 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useUserStore } from '@/store/user'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
+import { ssoLogin } from '@/api/auth'
+import { ApiResponse } from '@/types/api'
 
 const email = ref('')
 const password = ref('')
 const rememberMe = ref(false)
 const userStore = useUserStore()
-const router = useRouter()
+const route = useRoute()
+
+const redirectUri = ref('')
+
+onMounted(() => {
+  // 获取 URL 查询参数中的 redirect_uri
+  redirectUri.value = route.query.redirect_uri as string || ''
+  console.log('redirectUri', redirectUri.value)
+})
 
 const handleLogin = async () => {
   try {
-    await userStore.login({
+    const loginRes = await userStore.login({
       email: email.value,
       password: password.value
-    })
-    router.push('/')
+    }) as { token?: string }
+    // 登录成功后，调用 SSO 下发 code 接口
+    const token = loginRes?.token || localStorage.getItem('token')
+    if (!redirectUri.value) {
+      alert('缺少 redirect_uri 参数')
+      return
+    }
+    const ssoRes: ApiResponse<string> = await ssoLogin(redirectUri.value, token || '')
+    if (ssoRes.code === 0) {
+      window.location.href = redirectUri.value + '?code=' + ssoRes.data
+    } else {
+      alert(ssoRes.msg || '登录失败')
+    }
   } catch (error: any) {
-    alert(error.message || '登录失败')
+    console.log('error', error)
+    alert(error.message || error.msg || '登录失败')
   }
 }
 </script>

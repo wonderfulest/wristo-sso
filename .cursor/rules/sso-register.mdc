@@ -1,5 +1,116 @@
 ---
-description:
-globs:
+description: 
+globs: 
 alwaysApply: false
 ---
+
+SSO 用户注册的实现，核心目标是：
+
+集中注册一次，所有接入系统统一识别该用户，无需重复注册。
+
+下面是标准的实现方案和常见注意点，帮你构建一个既统一又易接入的注册流程。
+
+✅ SSO 用户注册标准实现流程
+1. 注册入口统一在 SSO 系统
+用户无论从哪个子系统发起注册请求，最终都跳转到 SSO 的注册页，例如：
+
+https://sso.wristo.io/register?redirect_uri=https://merchant.wristo.io/callback
+2. 填写注册信息（表单字段）
+常见字段包括：
+
+字段	描述
+用户名 / 手机号 / 邮箱	必填，唯一标识用户
+密码	明文传输需加密；建议强度校验
+验证码	图形/短信/邮箱验证码防止恶意注册
+推荐码（可选）	营销用途
+注册来源（auto）	如 merchant, dashboard 用于追踪
+
+3. 后端注册流程逻辑
+
+1. 校验验证码有效性
+2. 校验用户名唯一性（数据库 + 缓存）
+3. 对密码进行加盐 hash 存储（如 bcrypt）
+4. 写入用户中心数据库（SSO）
+5. 记录注册来源、时间、IP、User-Agent
+6. 可选：发送欢迎邮件 / 推送消息 / 审核流程
+4. 注册完成 → 自动登录 → 跳转回来源系统
+注册成功后，SSO 系统可以直接完成登录并重定向：
+
+302 Redirect 到：
+https://merchant.wristo.io/callback?code=xyz123
+子系统再去用 code 换取 token，流程与登录一致。
+
+✅ 技术实现建议
+统一用户中心数据表设计（简化版）
+
+```sql
+CREATE TABLE users (
+  id BIGINT PRIMARY KEY,
+  username VARCHAR(50) UNIQUE,
+  email VARCHAR(100),
+  phone VARCHAR(20),
+  password_hash VARCHAR(255),
+  status TINYINT DEFAULT 1,
+  register_source VARCHAR(50),
+  created_at DATETIME,
+  ...
+)
+```
+
+推荐注册方式支持
+注册方式	说明
+📧 邮箱注册	邮件验证码，常用于国外
+📱 手机注册	短信验证码，适合国内场景
+🆔 第三方注册	微信/Apple/GitHub 登录 + 自动注册
+🔐 企业用户注册	配合企业域名/管理员邀请制
+
+✅ 安全和用户体验建议
+密码加密存储（推荐 bcrypt/scrypt）
+
+前端加密传输（HTTPS + 滑动验证码）
+
+防止机器人刷注册（行为分析 + 图形验证码）
+
+用户注册来源分析（埋点：来源系统、渠道码）
+
+注册完成后直接登录（免去再次登录）
+
+✅ 多系统接入流程图（简化）
+text
+复制
+编辑
+      dashboard.wristo.io
+            |
+            | 未登录
+            ↓
+    → 跳转 sso.wristo.io/register?redirect_uri=https://dashboard...
+            |
+            ↓
+     用户注册成功，记录来源=dashboard
+            |
+            ↓
+    SSO 自动登录并签发 code/token
+            |
+            ↓
+    跳转回 dashboard，并完成登录状态初始化
+✅ 总结
+统一注册入口，集中管理用户信息，是 SSO 架构的基础组成。注册成功后应立即完成登录，并通过 OAuth2 机制将 token 传递给子系统完成统一登录。
+
+如你需要我帮你：
+
+编写注册页面 UI（支持多注册方式）；
+
+搭建注册接口（Java / Node / Python）；
+
+整合注册后的跳转登录逻辑；
+都可以告诉我，我可以基于你当前架构快速给出落地方案。
+
+
+
+
+
+
+
+
+
+询问 ChatGPT

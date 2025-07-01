@@ -12,11 +12,11 @@ alwaysApply: false
 
 1. SSO 作为授权服务器（Authorization Server）
 
-用户访问 dashboard.wristo.io → 检查未登录 → 重定向至 sso.wristo.io/login?redirect_uri=https://dashboard.wristo.io/callback
+用户访问 dashboard.wristo.io → 检查未登录 → 重定向至 sso.wristo.io/login?redirect_uri=https://dashboard.wristo.io/auth/callback
 
 2. 登录成功后，SSO 签发一个带有 token 的跳转 URL：
 
-https://dashboard.wristo.io/callback?code=abc123
+https://dashboard.wristo.io/auth/callback?code=abc123
 
 3. dashboard 后端通过 code 向 SSO 后台接口（Token Endpoint）换取 Access Token：
 
