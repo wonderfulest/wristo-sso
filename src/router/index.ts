@@ -1,5 +1,4 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import { useUserStore } from '@/store/user'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -20,17 +19,12 @@ const router = createRouter({
       component: () => import('@/views/Register.vue'),
       meta: { requiresAuth: false }
     },
-    {
-      path: '/auth/callback',
-      name: 'AuthCallback',
-      component: () => import('@/views/AuthCallback.vue'),
-      meta: { requiresAuth: false }
-    },
   ]
 })
 
 // 路由守卫
 router.beforeEach((to, from, next) => {
+  console.log(from, to)
   const token = localStorage.getItem('token')
   if (!token && to.path !== '/login') {
     next('/login')

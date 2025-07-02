@@ -19,6 +19,16 @@ export interface TokenResponse {
   id_token?: string
 }
 
+// SSO 登录下发 code
+export const ssoLogin = (redirectUri: string, token: string): Promise<ApiResponse<string>> => {
+  console.log('ssoLogin', redirectUri, token)
+  return instance.post('/sso/login', { redirectUri }, {
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  })
+}
+
 export const login = (credentials: LoginCredentialsDto) : Promise<ApiResponse<LoginResponseData>> => {
   return instance.post('/public/auth/login/email', credentials)
 }
@@ -31,17 +41,6 @@ export const register =  (userData: RegisterDto) : Promise<ApiResponse<string>> 
 export const logout = async () : Promise<ApiResponse<string>> => {
   return instance.post('/public/auth/logout')
 }
-
-// SSO 登录下发 code
-export const ssoLogin = (redirectUri: string, token: string): Promise<ApiResponse<string>> => {
-  console.log('ssoLogin', redirectUri, token)
-  return instance.post('/public/sso/login', { redirectUri }, {
-    headers: {
-      Authorization: `Bearer ${token}`
-    }
-  })
-}
-
 // SSO 回调换取 token
 export const exchangeCode = (code: string, client: string): Promise<ApiResponse<TokenResponse>> => {
   return instance.post('/public/sso/token', { code, client })

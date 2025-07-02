@@ -3,31 +3,6 @@ description:
 globs: 
 alwaysApply: false
 ---
-# SSO 时序图
-
-用户            dashboard前端       dashboard后端       SSO服务         用户信息服务
-│                  │                    │                 │                 │
-│── 访问 dashboard ─▶│                  │                 │                 │
-│                  │── 检查未登录 ─────▶│                 │                 │
-│                  │◀──── 重定向至 SSO 登录页（带redirect_uri） ─────────────┘
-│◀──── 跳转至 ─────│                    │                 │
-│    SSO 登录页（Authorization Endpoint）                │
-│                  │                    │                 │
-│── 输入用户名密码 →│                    │                 │
-│                  │                    │── 验证用户信息 ─▶│                 │
-│                  │                    │◀──── 登录成功 ──│                 │
-│◀──── 登录成功跳转 redirect_uri?code=abc123 ─────────────┘
-│                  │                    │                 │
-│                  │── code 发送给后端 ─▶│                 │
-│                  │                    │── POST /token（带 code） ────────▶│
-│                  │                    │                 │── 校验 code、生成 token ─▶│
-│                  │                    │                 │◀──────── 返回 access_token,id_token ──│
-│                  │                    │◀──── 返回 token ──────────────────│
-│◀──── 页面加载成功 │                    │                 │
-│                  │                    │── GET /userinfo（带 token） ─────▶│
-│                  │                    │◀──── 返回用户信息 ────────────────│
-│◀──── 渲染页面 │                    │                 │
-
 
 # sso系统如何为其他系统提供鉴权
 
@@ -37,11 +12,13 @@ alwaysApply: false
 
 1. SSO 作为授权服务器（Authorization Server）
 
-用户访问 dashboard.wristo.io → 检查未登录 → 重定向至 sso.wristo.io/login?redirect_uri=https://dashboard.wristo.io/auth/callback
+用户访问 dasssohboard.wristo.io → 检查未登录 → 重定向至 sso.wristo.io/login?redirect_uri=https://dashboard.wristo.io/auth/callback
 
 2. 登录成功后，SSO 签发一个带有 token 的跳转 URL：
 
 https://dashboard.wristo.io/auth/callback?code=abc123
+
+dashboard 前端需要处理跳转 URL，解析得到 code
 
 3. dashboard 后端通过 code 向 SSO 后台接口（Token Endpoint）换取 Access Token：
 
@@ -53,7 +30,7 @@ grant_type=authorization_code
 code=abc123
 client_id=dashboard
 client_secret=xxx
-redirect_uri=https://dashboard.wristo.io/callback
+redirect_uri=https://dashboard.wristo.io/auth/callback
 ```
 
 返回：
