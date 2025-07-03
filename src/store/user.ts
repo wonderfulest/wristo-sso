@@ -17,7 +17,7 @@ export const useUserStore = defineStore('user', {
       localStorage.setItem('userInfo', JSON.stringify(this.userInfo))
       return response.data
     },
-    async register(userData: { username: string; password: string; email: string }) {
+    async register(userData: { username: string; password: string; email: string; source: string }) {
       const response: ApiResponse<string> = await registerApi(userData)
       if (response.data) {
         return response.data

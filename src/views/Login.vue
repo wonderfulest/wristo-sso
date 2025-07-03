@@ -3,7 +3,7 @@
     <div class="login-logo">
       <span class="logo-bold">Wristo<span class="logo-green">Io</span></span>
     </div>
-    <h2 class="login-title">SSO Login</h2>
+    <h2 class="login-title">{{ client ? formatClient(client) + ' Login' : 'SSO Login' }}</h2>
     <form class="login-form" @submit.prevent="handleLogin">
       <label class="login-label" for="email">Email Address</label>
       <input
@@ -24,7 +24,6 @@
         autocomplete="current-password"
         required
       />
-
       <div class="login-options">
         <label class="remember-me">
           <input type="checkbox" v-model="rememberMe" />
@@ -39,7 +38,7 @@
       <button class="login-btn" type="submit">Continue</button>
     </form>
     <div class="register-tip">
-      No account? <router-link to="/register">Sign up here.</router-link>
+      No account? <router-link :to="{ path: '/register', query: route.query }">Sign up here.</router-link>
     </div>
     <div class="login-footer">
       © 2025 Wristo.
@@ -63,9 +62,15 @@ const rememberMe = ref(false)
 const userStore = useUserStore()
 const route = useRoute()
 
+const client = ref('')
 const redirectUri = ref('')
 
+const formatClient = (client: string) => {
+  return client.charAt(0).toUpperCase() + client.slice(1)
+}
+
 onMounted(() => {
+  client.value = route.query.client as string || ''
   // 获取 URL 查询参数中的 redirect_uri
   redirectUri.value = route.query.redirect_uri as string || ''
   console.log('redirectUri', redirectUri.value)

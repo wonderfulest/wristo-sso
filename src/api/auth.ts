@@ -8,6 +8,7 @@ export interface RegisterDto {
   username: string
   password: string
   email: string
+  source: string // 来源，如：web, app, sso
   roles?: string[]
 }
 
@@ -34,7 +35,7 @@ export const login = (credentials: LoginCredentialsDto) : Promise<ApiResponse<Lo
 }
 
 export const register =  (userData: RegisterDto) : Promise<ApiResponse<string>> => {
-  userData.roles = ['ROLE_MERCHANT']
+  userData.roles = ['ROLE_USER']
   return instance.post('/public/auth/register', userData)
 }
 

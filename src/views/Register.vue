@@ -3,7 +3,7 @@
     <div class="register-logo">
       <span class="logo-bold">Wristo<span class="logo-green">Io</span></span>
     </div>
-    <h2 class="register-title">Developer Sign Up</h2>
+    <h2 class="register-title">{{ client ? formatClient(client) + ' Sign Up' : 'Developer Sign Up' }}</h2>
     <form class="register-form" @submit.prevent="handleRegister">
       <label class="register-label" for="username">Full Name</label>
       <input
@@ -69,11 +69,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, reactive, onMounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { useUserStore } from '@/store/user'
+import { ElMessage } from 'element-plus'
 
 const router = useRouter()
+const route = useRoute()
 const userStore = useUserStore()
 
 const username = ref('')
@@ -86,6 +88,18 @@ const errors = reactive({
   email: '',
   password: '',
   confirmPassword: ''
+})
+
+const client = ref('')
+const redirectUri = ref('')
+
+const formatClient = (client: string) => {
+  return client.charAt(0).toUpperCase() + client.slice(1)
+}
+
+onMounted(() => {
+  client.value = route.query.client as string || ''
+  redirectUri.value = route.query.redirect_uri as string || ''
 })
 
 function validateField(field: string) {
@@ -143,10 +157,13 @@ const handleRegister = async () => {
     await userStore.register({
       username: username.value,
       email: email.value,
-      password: password.value
+      password: password.value,
+      source: client.value
     })
-    alert('注册成功')
-    router.push('/login')
+    ElMessage.success('注册成功，正在跳转登录页...')
+    setTimeout(() => {
+      router.push({ path: '/login', query: route.query })
+    }, 1200)
   } catch (error: any) {
     alert(error.msg || '注册失败')
   }
