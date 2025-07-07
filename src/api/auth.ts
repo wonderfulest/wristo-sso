@@ -46,3 +46,19 @@ export const logout = async () : Promise<ApiResponse<string>> => {
 export const exchangeCode = (code: string, client: string): Promise<ApiResponse<TokenResponse>> => {
   return instance.post('/public/sso/token', { code, client })
 }
+
+// 发送重置密码邮件
+export const requestResetPassword = (email: string): Promise<ApiResponse<boolean>> => {
+  return instance.post('/public/auth/reset-password/request', { email })
+}
+
+// 验证重置 token
+export const verifyResetToken = (token: string): Promise<ApiResponse<boolean>> => {
+  return instance.get('/public/auth/reset-password/validate', { params: { token } })
+}
+
+// 提交新密码
+export const resetPassword = (token: string, newPassword: string): Promise<ApiResponse<boolean>> => {
+  return instance.post('/public/auth/reset-password/submit', { token, newPassword })
+}
+

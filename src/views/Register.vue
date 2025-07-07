@@ -54,17 +54,11 @@
       <div v-if="errors.confirmPassword" class="input-error">{{ errors.confirmPassword }}</div>
 
       <button class="register-btn" type="submit">Continue</button>
-      <div class="register-link">
+      <div class="register-tip">
         Already have an account?
         <router-link to="/login">Log In</router-link>
       </div>
     </form>
-    <div class="register-footer">
-      © 2025 Wristo.
-      <a href="#" class="footer-link">Terms of Use.</a>
-      <a href="#" class="footer-link">Privacy Policy.</a>
-      Wristo is not affiliated with Garmin.
-    </div>
   </div>
 </template>
 
@@ -171,14 +165,25 @@ const handleRegister = async () => {
 </script>
 
 <style scoped>
+html, body {
+  height: 100vh;
+  overflow: hidden;
+}
 .register-page {
-  min-height: 100vh;
+  min-height: 0;
+  height: 100%;
+  flex: 1 0 auto;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  background: #fff;
   padding-top: 40px;
+}
+@media (max-width: 600px) {
+  .register-page {
+    height: 100%;
+    padding-top: 24px;
+  }
 }
 .register-logo {
   font-size: 2.2rem;
@@ -250,29 +255,17 @@ const handleRegister = async () => {
 .register-btn:hover {
   background: #333;
 }
-.register-link {
+.register-tip {
   text-align: center;
-  margin-top: 1rem;
+  margin-top: 18px;
   font-size: 1rem;
 }
-.register-link a {
-  color: #4CAF50;
+.register-tip a {
+  color:  #111;
   text-decoration: none;
   margin-left: 4px;
 }
-.register-link a:hover {
+.register-tip a:hover {
   text-decoration: underline;
-}
-.register-footer {
-  margin-top: 38px;
-  text-align: center;
-  color: #444;
-  font-size: 0.98rem;
-  line-height: 1.7;
-}
-.footer-link {
-  color: #222;
-  text-decoration: underline;
-  margin: 0 4px;
 }
 </style> 

@@ -19,19 +19,39 @@ const router = createRouter({
       component: () => import('@/views/Register.vue'),
       meta: { requiresAuth: false }
     },
+    {
+      path: '/forgot-password',
+      name: 'ForgotPassword',
+      component: () => import('@/views/ForgotPassword.vue'),
+      meta: { requiresAuth: false }
+    },
+    {
+      path: '/reset-password',
+      name: 'ResetPassword',
+      component: () => import('@/views/ResetPassword.vue'),
+      meta: { requiresAuth: false }
+    },
   ]
 })
+
+// 定义白名单路径（不需要登录）
+const whiteList = ['/login', '/register', '/forgot-password', '/reset-password']
 
 // 路由守卫
 router.beforeEach((to, from, next) => {
   console.log(from, to)
-  const token = localStorage.getItem('token')
-  if (to.path === '/register') {
+  if (whiteList.includes(to.path)) {
+    // 白名单路径，直接放行
     next()
-  } else if (!token && to.path !== '/login') {
-    next('/login')
   } else {
-    next()
+    const token = localStorage.getItem('token')
+    if (!token) {
+      // 如果 token 不存在，则跳转到登录页面
+      next('/login')
+    } else {
+      // 如果 token 存在，则放行
+      next()
+    }
   }
 })
 

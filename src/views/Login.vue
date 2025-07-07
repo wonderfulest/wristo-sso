@@ -31,20 +31,14 @@
         </label>
       </div>
 
-      <div class="forgot-row">
-        <span>Forgot Password? <a href="#" class="reset-link">Reset here.</a></span>
+      <div class="register-tip">
+        Forgot Password? <router-link to="/forgot-password">Reset here.</router-link>
       </div>
 
       <button class="login-btn" type="submit">Continue</button>
     </form>
     <div class="register-tip">
       No account? <router-link :to="{ path: '/register', query: { client: client, redirect_uri: redirectUri } }">Sign up here.</router-link>
-    </div>
-    <div class="login-footer">
-      © 2025 Wristo.
-      <a href="#" class="footer-link">Terms of Use.</a>
-      <a href="#" class="footer-link">Privacy Policy.</a>
-      Wristo is not affiliated with Garmin.
     </div>
   </div>
 </template>
@@ -85,8 +79,12 @@ const handleLogin = async () => {
     // 登录成功后，调用 SSO 下发 code 接口
     const token = loginRes?.token || localStorage.getItem('token')
     if (!redirectUri.value) {
-      alert('缺少 redirect_uri 参数')
-      return
+      if (import.meta.env.VITE_SSO_REDIRECT_URI) {
+        redirectUri.value = import.meta.env.VITE_SSO_REDIRECT_URI
+      } else {
+        alert('缺少 redirect_uri 参数')
+        return
+      }
     }
     const ssoRes: ApiResponse<string> = await ssoLogin(redirectUri.value, token || '')
     if (ssoRes.code === 0) {
@@ -102,14 +100,25 @@ const handleLogin = async () => {
 </script>
 
 <style scoped>
+html, body {
+  height: 100vh;
+  overflow: hidden;
+}
 .login-page {
-  min-height: 100vh;
+  min-height: 0;
+  height: 100%;
+  flex: 1 0 auto;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  background: #fff;
   padding-top: 40px;
+}
+@media (max-width: 600px) {
+  .login-page {
+    height: 100%;
+    padding-top: 24px;
+  }
 }
 .login-logo {
   font-size: 2.2rem;
@@ -170,16 +179,6 @@ const handleLogin = async () => {
   font-weight: 500;
   gap: 6px;
 }
-.forgot-row {
-  margin: 8px 0 0 0;
-  font-size: 1rem;
-}
-.reset-link {
-  color: #222;
-  font-weight: 600;
-  text-decoration: underline;
-  margin-left: 2px;
-}
 .login-btn {
   margin-top: 22px;
   width: 100%;
@@ -195,18 +194,6 @@ const handleLogin = async () => {
 }
 .login-btn:hover {
   background: #333;
-}
-.login-footer {
-  margin-top: 38px;
-  text-align: center;
-  color: #444;
-  font-size: 0.98rem;
-  line-height: 1.7;
-}
-.footer-link {
-  color: #222;
-  text-decoration: underline;
-  margin: 0 4px;
 }
 .register-tip {
   text-align: center;

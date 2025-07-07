@@ -1,0 +1,132 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+
+# 重置密码
+
+“重置密码”功能（Forgot Password / Reset Password），常见流程是：
+
+🧩 功能流程图
+
+```markdown
+1. 打开忘记密码页面，用户输入邮箱（或用户名）
+   ↓
+2. 系统生成临时 token，并将包含 token 的重置链接发送到邮箱
+   ↓
+3. 用户点击重置密码链接跳转到前端重置密码页面，附带 token 参数
+   ↓
+4. 用户输入新密码提交，后端验证 token 并修改密码
+```
+
+忘记密码页面路由：/forgot-password
+重置密码页面路由：/reset-password
+
+🛠️ 后端应该提供的接口（建议使用 RESTful 风格）
+
+## 1. 请求发送重置密码邮件（POST）
+
+接口地址：POST /api/public/auth/password/reset-request
+
+参数（JSON）：
+
+```json
+{
+  "email": "user@example.com"
+}
+```
+
+逻辑：
+
+1. 校验邮箱是否存在；
+1. 生成带过期时间的重置 token（建议使用 UUID + 存库）；
+1. 构造链接，如：https://wristo.io/reset-password?token=xxx
+1. 通过邮件系统发送链接；
+
+返回统一响应，如：
+
+```json
+{
+  "code": 0,
+  "msg": "success",
+  "data": true
+}
+```
+
+## 2. 验证重置 token（GET）
+
+接口地址：GET /api/public/auth/password/verify-reset-token
+
+参数：?token=xxx
+
+作用：
+
+1. 可选的校验步骤：判断 token 是否有效（未过期、存在于系统中）；
+1. 前端可调用此接口确认 token 有效性后显示重置页面；
+
+返回示例：
+
+```json
+{
+  "code": 0,
+  "msg": "success",
+  "data": true
+}
+```
+
+## 3. 提交新密码（POST）
+
+接口地址：POST /api/public/auth/password/reset
+
+参数（JSON）：
+
+```json
+{
+  "token": "xxx",
+  "newPassword": "NewSecurePass123!"
+}
+```
+
+逻辑：
+
+1. 验证 token 合法性（未过期、未使用）；
+1. 根据 token 找到对应用户；
+1. 更新密码（需要 hash 加密后写入）；
+
+将 token 标记为已使用或删除；
+
+返回成功响应：
+
+```json
+{
+  "code": 0,
+  "msg": "success",
+  "data": true
+}
+```
+
+🔐 安全建议
+
+1. Token 应该设置有效期（如 15 分钟或 1 小时），防止滥用；
+1. Token 应该不可预测（使用 JWT、UUID v4 或 HMAC）；
+1. 新密码必须进行服务端校验和加密（如 BCrypt）；
+1. 邮件内容避免暴露敏感信息，仅提供重置链接；
+1. 若使用数据库存 token，可设计表如下：
+
+```sql
+-- 密码重置 token 表
+CREATE TABLE IF NOT EXISTS `password_reset_token` (
+    `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+    `token` VARCHAR(64) NOT NULL COMMENT '重置 token',
+    `user_id` BIGINT UNSIGNED NOT NULL COMMENT '用户ID',
+    `expires_at` DATETIME NOT NULL COMMENT '过期时间',
+    `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    `version` INT NOT NULL DEFAULT 1 COMMENT '版本号',
+    `is_deleted` TINYINT NOT NULL DEFAULT 0 COMMENT '是否删除：0-未删除，1-已删除',
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_token` (`token`),
+    KEY `idx_user_id` (`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='密码重置 token 表';
+```

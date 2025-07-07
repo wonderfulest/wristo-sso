@@ -1,48 +1,19 @@
 <template>
   <div class="global-layout">
-    <!-- Header -->
-    <header class="header">
-      <div class="header-inner">
-        <div class="logo">
-          <span class="logo-icon">W</span>
-          <span class="logo-text">pay</span>
-        </div>
-        <div class="header-right">
-          <a href="/account">ACCOUNT</a>
-          <a href="#">DOCUMENTATION</a>
-          <a href="/API" v-if="hasMerchantRole">API</a>
-        </div>
-        <div class="user-profile-dropdown">
-          <div class="user-profile-name" @click="toggleDropdown">
-            {{ userStore.userInfo?.username }}
-            <span class="dropdown-arrow">▼</span>
-          </div>
-          <div class="dropdown-content" v-if="isDropdownOpen">
-            <a href="/account/profile">Edit Profile</a>
-            <a href="/account/password">Change Password</a>
-            <a href="#" @click.prevent="handleLogout">Log Out</a>
-          </div>
-        </div>
-      </div>
-    </header>
-    <!-- Main Content -->
     <main class="main-content">
       <router-view />
     </main>
-    <!-- Footer -->
     <footer class="footer">
       <div class="footer-inner">
         <div class="footer-left">
-          <span class="footer-icon">🐦</span>
-          <span>© Wristo 2025</span>
-        </div>
-        <div class="footer-links">
-          <a href="#">Terms of Use</a>
-          <a href="#">Privacy Policy</a>
-          <a href="mailto:support@wristo.io">support@wristo.io</a>
+          © 2025 Wristo.
+          <div class="footer-links">
+            <a href="#">Terms of Use.</a>
+            <a href="#">Privacy Policy.</a>
+          </div>
         </div>
         <div class="footer-right">
-          <span>Wristo</span>
+          Wristo is not affiliated with Garmin.
         </div>
       </div>
     </footer>
@@ -50,26 +21,6 @@
 </template>
 
 <script setup lang="ts">
-import { useUserStore } from '@/store/user'
-import { useRouter } from 'vue-router'
-import { computed, ref } from 'vue'
-const router = useRouter()
-const userStore = useUserStore()
-const handleLogout = async () => {
-  await userStore.logout()
-  router.push('/login')
-}
-
-const hasMerchantRole = computed(() => {
-  const roles: any[] = (userStore.userInfo && Array.isArray((userStore.userInfo as any).roles)) ? (userStore.userInfo as any).roles : []
-  return roles.some((role: any) => role.roleCode === 'ROLE_MERCHANT')
-})
-
-// 下拉菜单控制
-const isDropdownOpen = ref(false)
-const toggleDropdown = () => {
-  isDropdownOpen.value = !isDropdownOpen.value
-}
 </script>
 
 <style lang="scss" scoped>
@@ -77,9 +28,11 @@ const toggleDropdown = () => {
 
 .global-layout {
   min-height: 100vh;
+  height: 100vh;
   display: flex;
   flex-direction: column;
   background: $color-bg;
+  overflow: hidden;
 }
 .header {
   background: $color-bg;
@@ -128,21 +81,25 @@ const toggleDropdown = () => {
   color: $color-success;
 }
 .main-content {
-  flex: 1;
+  flex: 1 0 auto;
   max-width: 1200px;
   margin: 0 auto;
   width: 100%;
   padding: 32px 0 0 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 .footer {
+  flex-shrink: 0;
   background: $color-footer-bg;
   padding: 8px 0;
   width: 100%;
-  position: sticky;
+  font-size: $font-size-xs;
+  position: relative;
   bottom: 0;
   left: 0;
   margin-top: auto;
-  font-size: $font-size-xs;
 }
 .footer-inner {
   max-width: 1400px;
