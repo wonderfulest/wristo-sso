@@ -4,19 +4,28 @@ export interface ApiResponse<T> {
   data?: T
 } 
 
+export interface RoleVO {
+  id: number
+  roleName: string
+  roleCode: string
+  description: string
+  status: number
+}
+
 export interface UserInfo {
   id: number
   username: string
-  nickname: string | null
+  nickname: string
   email: string
-  phone: string | null
-  avatar: string | null
-  status: string | null
+  phone: string
+  avatar: string
+  status: number
   createdAt: string
   updatedAt: string
-  lastLoginTime: string | null
-  lastLoginIp: string | null
+  lastLoginTime: string
+  lastLoginIp: string
   isDeleted: string
+  roles: RoleVO[]
 }
 
 export interface LoginResponseData {
