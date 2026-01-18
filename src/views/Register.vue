@@ -154,12 +154,12 @@ const handleRegister = async () => {
       password: password.value,
       source: client.value
     })
-    ElMessage.success('注册成功，正在跳转登录页...')
+    ElMessage.success('Registration successful, redirecting to login page...')
     setTimeout(() => {
       router.push({ path: '/login', query: route.query })
     }, 1200)
   } catch (error: any) {
-    alert(error.msg || '注册失败')
+    alert(error.msg || 'Registration failed')
   }
 }
 </script>
