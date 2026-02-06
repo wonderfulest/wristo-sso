@@ -37,9 +37,6 @@
 
       <button class="login-btn" type="submit">Continue</button>
     </form>
-    <div class="register-tip">
-      No account? <router-link :to="{ path: '/register', query: { client: client, redirect_uri: redirectUri } }">Sign up here.</router-link>
-    </div>
   </div>
 </template>
 

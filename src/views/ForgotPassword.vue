@@ -58,7 +58,7 @@ const handleForgot = async () => {
     await requestResetPassword(email.value)
     ElMessage.success('Reset email sent, please check your inbox!')
     setTimeout(() => {
-      router.push('/login')
+      router.push('/auth')
     }, 1200)
   } catch (error: any) {
     ElMessage.error(error.msg || 'Failed to send, please try again later')

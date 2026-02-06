@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
-import { login as loginApi, register as registerApi, logout as logoutApi } from '@/api/auth'
+import { login as loginApi, register as registerApi, logout as logoutApi, verifyEmailCode } from '@/api/auth'
 import { getUserInfo } from '@/api/user'
-import { type UserInfo, type LoginResponseData, type ApiResponse } from '@/types/api'
+import { type UserInfo, type LoginVO, type ApiResponse, type EmailVerifyCodeDTO, type LoginVO } from '@/types/api'
 
 export const useUserStore = defineStore('user', {
   state: () => ({
@@ -10,7 +10,15 @@ export const useUserStore = defineStore('user', {
   }),
   actions: {
     async login(credentials: { email: string; password: string }) {
-      const response: ApiResponse<LoginResponseData> = await loginApi(credentials)
+      const response: ApiResponse<LoginVO> = await loginApi(credentials)
+      this.token = response.data?.token || ''
+      this.userInfo = response.data?.userInfo || null
+      localStorage.setItem('token', this.token)
+      localStorage.setItem('userInfo', JSON.stringify(this.userInfo))
+      return response.data
+    },
+    async loginWithEmailCode(dto: EmailVerifyCodeDTO) {
+      const response: ApiResponse<LoginVO> = await verifyEmailCode(dto)
       this.token = response.data?.token || ''
       this.userInfo = response.data?.userInfo || null
       localStorage.setItem('token', this.token)

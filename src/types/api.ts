@@ -28,7 +28,16 @@ export interface UserInfo {
   roles: RoleVO[]
 }
 
-export interface LoginResponseData {
+export interface EmailSendCodeDTO {
+  email: string
+}
+
+export interface EmailVerifyCodeDTO {
+  email: string
+  code: string
+}
+
+export interface LoginVO {
   token: string
   userInfo: UserInfo
 }

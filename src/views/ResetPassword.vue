@@ -111,7 +111,7 @@ const handleReset = async () => {
     await resetPassword(token.value, password.value)
     ElMessage.success('Password reset successfully! Please log in.')
     setTimeout(() => {
-      router.push('/login')
+      router.push('/auth')
     }, 1200)
   } catch (error: any) {
     ElMessage.error(error.msg || 'Failed to reset password, please try again later')

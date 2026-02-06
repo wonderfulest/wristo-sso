@@ -1,5 +1,5 @@
 import instance from '@/config/axios'
-import type { ApiResponse, LoginResponseData } from '@/types/api'
+import type { ApiResponse, LoginVO, EmailSendCodeDTO, EmailVerifyCodeDTO, LoginVO } from '@/types/api'
 export interface LoginCredentialsDto {
   email: string
   password: string
@@ -30,8 +30,16 @@ export const ssoLogin = (redirectUri: string, token: string): Promise<ApiRespons
   })
 }
 
-export const login = (credentials: LoginCredentialsDto) : Promise<ApiResponse<LoginResponseData>> => {
+export const login = (credentials: LoginCredentialsDto) : Promise<ApiResponse<LoginVO>> => {
   return instance.post('/public/auth/login/email', credentials)
+}
+
+export const sendEmailCode = (dto: EmailSendCodeDTO): Promise<ApiResponse<boolean>> => {
+  return instance.post('/auth/email/send-code', dto)
+}
+
+export const verifyEmailCode = (dto: EmailVerifyCodeDTO): Promise<ApiResponse<LoginVO>> => {
+  return instance.post('/auth/email/verify-code', dto)
 }
 
 export const register =  (userData: RegisterDto) : Promise<ApiResponse<string>> => {

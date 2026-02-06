@@ -39,7 +39,7 @@ instance.interceptors.response.use(
       localStorage.removeItem('userInfo')
       ElMessage.error('登录已过期，请重新登录')
       // 跳转到登录页面
-      router.push('/login')
+      router.push('/auth')
     } else {
     ElMessage.error('网络错误，请稍后重试')
     }
