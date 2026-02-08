@@ -24,6 +24,9 @@ export const useUserStore = defineStore('user', {
       this.saveLoginResult(response.data)
       return response.data
     },
+    async register(_userData: { username: string; password: string; email: string; source: string }) {
+      throw new Error('Registration is disabled in this application')
+    },
     async loginWithGoogle(dto: GoogleLoginDTO) {
       const response: ApiResponse<LoginVO> = await googleLoginApi(dto)
       this.saveLoginResult(response.data)

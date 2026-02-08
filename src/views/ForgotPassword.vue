@@ -61,7 +61,7 @@ const handleForgot = async () => {
       router.push('/auth')
     }, 1200)
   } catch (error: any) {
-    ElMessage.error(error.msg || 'Failed to send, please try again later')
+    console.error('forgot-password request error', error)
   }
 }
 </script>

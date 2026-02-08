@@ -191,6 +191,40 @@ function startCooldown() {
   }, 1000)
 }
 
+async function handleSendCode() {
+  validateField('email')
+  if (errors.email) return
+
+  loading.value = true
+  try {
+    await sendEmailCode({ email: email.value.trim() })
+    codeState.value = 'code_sent'
+    startCooldown()
+    ElMessage.success('If this email is valid, a code has been sent.')
+  } catch (e: any) {
+    console.error('send code error', e)
+  } finally {
+    loading.value = false
+  }
+}
+
+async function handleVerify() {
+  validateField('email')
+  validateField('code')
+  if (errors.email || errors.code) return
+
+  loading.value = true
+  try {
+    const loginVO = await userStore.loginWithEmailCode({ email: email.value.trim(), code: code.value.trim() })
+    const token = loginVO?.token || localStorage.getItem('token') || ''
+    await handleSsoRedirect(token)
+  } catch (e: any) {
+    console.error('verify code error', e)
+  } finally {
+    loading.value = false
+  }
+}
+
 async function handleSsoRedirect(token: string) {
   let target = redirectUri.value
   if (!target) {

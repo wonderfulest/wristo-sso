@@ -114,7 +114,7 @@ const handleReset = async () => {
       router.push('/auth')
     }, 1200)
   } catch (error: any) {
-    ElMessage.error(error.msg || 'Failed to reset password, please try again later')
+    console.error('reset-password submit error', error)
   }
 }
 </script>

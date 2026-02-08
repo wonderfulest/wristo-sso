@@ -62,3 +62,16 @@ export const resetPasswordByCode = (dto: ResetPasswordByCodeDTO): Promise<ApiRes
   return instance.post('/users/reset-password', dto)
 }
 
+// Legacy password reset flow (kept for compatibility with existing pages)
+export const requestResetPassword = (email: string): Promise<ApiResponse<boolean>> => {
+  return instance.post('/public/auth/reset-password/request', { email })
+}
+
+export const verifyResetToken = (token: string): Promise<ApiResponse<boolean>> => {
+  return instance.get('/public/auth/reset-password/validate', { params: { token } })
+}
+
+export const resetPassword = (token: string, newPassword: string): Promise<ApiResponse<boolean>> => {
+  return instance.post('/public/auth/reset-password/submit', { token, newPassword })
+}
+
