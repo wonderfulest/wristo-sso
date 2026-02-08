@@ -37,6 +37,10 @@ export interface EmailVerifyCodeDTO {
   code: string
 }
 
+export interface GoogleLoginDTO {
+  credential: string
+}
+
 export interface LoginVO {
   token: string
   userInfo: UserInfo

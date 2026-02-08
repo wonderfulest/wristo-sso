@@ -69,7 +69,7 @@ onMounted(() => {
 
 const handleLogin = async () => {
   try {
-    const loginRes = await userStore.login({
+    const loginRes = await userStore.loginWithPassword({
       email: email.value,
       password: password.value
     }) as { token?: string }
@@ -90,8 +90,7 @@ const handleLogin = async () => {
       alert(ssoRes.msg || '登录失败')
     }
   } catch (error: any) {
-    console.log('error', error)
-    alert(error.message || error.msg || '登录失败')
+    console.error('login error', error)
   }
 }
 </script>

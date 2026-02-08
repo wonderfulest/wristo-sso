@@ -1,7 +1,6 @@
 import { defineStore } from 'pinia'
-import { login as loginApi, register as registerApi, logout as logoutApi, verifyEmailCode } from '@/api/auth'
-import { getUserInfo } from '@/api/user'
-import { type UserInfo, type LoginVO, type ApiResponse, type EmailVerifyCodeDTO, type LoginVO } from '@/types/api'
+import { logout as logoutApi, loginByEmail, verifyEmailCode, googleLogin as googleLoginApi, googleOAuthCodeLogin as googleOAuthCodeLoginApi } from '@/api/auth'
+import type { UserInfo, LoginVO, ApiResponse, EmailVerifyCodeDTO, GoogleLoginDTO } from '@/types/api'
 
 export const useUserStore = defineStore('user', {
   state: () => ({
@@ -9,53 +8,42 @@ export const useUserStore = defineStore('user', {
     userInfo: JSON.parse(localStorage.getItem('userInfo') || 'null') as UserInfo | null
   }),
   actions: {
-    async login(credentials: { email: string; password: string }) {
-      const response: ApiResponse<LoginVO> = await loginApi(credentials)
-      this.token = response.data?.token || ''
-      this.userInfo = response.data?.userInfo || null
+    saveLoginResult(data: LoginVO | undefined) {
+      this.token = data?.token || ''
+      this.userInfo = data?.userInfo || null
       localStorage.setItem('token', this.token)
       localStorage.setItem('userInfo', JSON.stringify(this.userInfo))
+    },
+    async loginWithPassword(dto: { email: string; password: string }) {
+      const response: ApiResponse<LoginVO> = await loginByEmail(dto)
+      this.saveLoginResult(response.data)
       return response.data
     },
     async loginWithEmailCode(dto: EmailVerifyCodeDTO) {
       const response: ApiResponse<LoginVO> = await verifyEmailCode(dto)
-      this.token = response.data?.token || ''
-      this.userInfo = response.data?.userInfo || null
-      localStorage.setItem('token', this.token)
-      localStorage.setItem('userInfo', JSON.stringify(this.userInfo))
+      this.saveLoginResult(response.data)
       return response.data
     },
-    async register(userData: { username: string; password: string; email: string; source: string }) {
-      const response: ApiResponse<string> = await registerApi(userData)
-      if (response.data) {
-        return response.data
-      }
-      throw new Error(response.msg || '注册失败')
+    async loginWithGoogle(dto: GoogleLoginDTO) {
+      const response: ApiResponse<LoginVO> = await googleLoginApi(dto)
+      this.saveLoginResult(response.data)
+      return response.data
+    },
+    async loginWithGoogleCode(code: string, redirectUri: string) {
+      const response: ApiResponse<LoginVO> = await googleOAuthCodeLoginApi(code, redirectUri)
+      this.saveLoginResult(response.data)
+      return response.data
     },
     async logout() {
       try {
         await logoutApi()
       } catch (e) {
-        // 可选：错误处理
         console.error('logout error', e)
       }
       this.token = ''
       this.userInfo = null
       localStorage.removeItem('token')
       localStorage.removeItem('userInfo')
-      // 路由跳转请在组件中处理
-    },
-    async fetchUserInfo() {
-      if (!this.token) {
-        throw new Error('未登录')
-      }
-      const response = await getUserInfo()
-      if (response.data) {
-        this.userInfo = response.data
-        localStorage.setItem('userInfo', JSON.stringify(this.userInfo))
-        return response.data
-      }
-      throw new Error(response.msg || '获取用户信息失败')
     },
     setToken(token: string) {
       this.token = token

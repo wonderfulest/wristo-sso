@@ -14,42 +14,32 @@ const router = createRouter({
       meta: { requiresAuth: false }
     },
     {
-      path: '/login',
-      name: 'Login',
-      component: () => import('@/views/Login.vue'),
+      path: '/change-email',
+      name: 'ChangeEmail',
+      component: () => import('@/views/ChangeEmail.vue'),
       meta: { requiresAuth: false }
     },
     {
-      path: '/forgot-password',
-      name: 'ForgotPassword',
-      component: () => import('@/views/ForgotPassword.vue'),
+      path: '/set-password',
+      name: 'SetPassword',
+      component: () => import('@/views/SetPassword.vue'),
       meta: { requiresAuth: false }
     },
-    {
-      path: '/reset-password',
-      name: 'ResetPassword',
-      component: () => import('@/views/ResetPassword.vue'),
-      meta: { requiresAuth: false }
-    },
+    // Legacy routes redirect to /auth
+    { path: '/login', redirect: '/auth' },
+    { path: '/forgot-password', redirect: '/auth' },
+    { path: '/reset-password', redirect: '/auth' },
   ]
 })
 
-// 定义白名单路径（不需要登录）
-const whiteList = ['/auth', '/login', '/forgot-password', '/reset-password']
-
-// 路由守卫
-router.beforeEach((to, from, next) => {
-  console.log(from, to)
-  if (whiteList.includes(to.path)) {
-    // 白名单路径，直接放行
+router.beforeEach((to, _from, next) => {
+  if (to.meta.requiresAuth === false) {
     next()
   } else {
     const token = localStorage.getItem('token')
     if (!token) {
-      // 如果 token 不存在，则跳转到登录页面
       next('/auth')
     } else {
-      // 如果 token 存在，则放行
       next()
     }
   }

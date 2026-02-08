@@ -7,13 +7,22 @@
     <h2 class="auth-title">{{ client ? formatClient(client) + ' Continue' : 'Continue' }}</h2>
 
     <div class="auth-card">
-      <button class="google-btn" type="button" disabled>Continue with Google</button>
+      <button class="google-btn" type="button" :disabled="loading" @click="handleGoogleLogin">
+        <svg class="google-icon" viewBox="0 0 24 24" width="20" height="20">
+          <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/>
+          <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+          <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+          <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+        </svg>
+        Continue with Google
+      </button>
 
       <div class="divider">
         <span class="divider-text">or</span>
       </div>
 
-      <form class="auth-form" @submit.prevent="handleVerify">
+      <!-- Password login (default) -->
+      <form v-if="loginMode === 'password'" class="auth-form" @submit.prevent="handlePasswordLogin">
         <label class="auth-label" for="email">Email address</label>
         <input
           id="email"
@@ -22,16 +31,51 @@
           class="auth-input"
           autocomplete="username"
           required
-          :disabled="state === 'verifying'"
+          :disabled="loading"
+          @blur="validateField('email')"
+        />
+        <div v-if="errors.email" class="input-error">{{ errors.email }}</div>
+
+        <label class="auth-label" for="password">Password</label>
+        <input
+          id="password"
+          v-model="password"
+          type="password"
+          class="auth-input"
+          autocomplete="current-password"
+          required
+          :disabled="loading"
+        />
+
+        <button class="submit-btn" type="submit" :disabled="!canPasswordLogin">
+          {{ loading ? 'Logging in...' : 'Continue' }}
+        </button>
+
+        <div class="helper-row">
+          <a href="javascript:void(0)" @click="switchMode('code')">Login with verification code</a>
+        </div>
+      </form>
+
+      <!-- Email code login -->
+      <form v-else class="auth-form" @submit.prevent="handleVerify">
+        <label class="auth-label" for="email2">Email address</label>
+        <input
+          id="email2"
+          v-model="email"
+          type="email"
+          class="auth-input"
+          autocomplete="username"
+          required
+          :disabled="loading"
           @blur="validateField('email')"
         />
         <div v-if="errors.email" class="input-error">{{ errors.email }}</div>
 
         <button class="send-code-btn" type="button" :disabled="!canSendCode" @click="handleSendCode">
-          {{ state === 'code_sent' ? 'Resend code' : 'Send code' }}
+          {{ sendCooldown > 0 ? `Resend code (${sendCooldown}s)` : (codeState === 'code_sent' ? 'Resend code' : 'Send code') }}
         </button>
 
-        <label class="auth-label" for="code">Code</label>
+        <label class="auth-label" for="code">Verification code</label>
         <div class="code-row">
           <input
             id="code"
@@ -39,19 +83,20 @@
             inputmode="numeric"
             maxlength="6"
             class="auth-input code-input"
+            placeholder="6-digit code"
             required
-            :disabled="state !== 'code_sent' && state !== 'verifying'"
+            :disabled="codeState !== 'code_sent' && !loading"
             @input="onCodeInput"
             @blur="validateField('code')"
           />
           <button class="verify-btn" type="submit" :disabled="!canVerify">
-            {{ state === 'verifying' ? 'Verifying...' : 'Verify' }}
+            {{ loading ? 'Verifying...' : 'Verify' }}
           </button>
         </div>
         <div v-if="errors.code" class="input-error">{{ errors.code }}</div>
 
         <div class="helper-row">
-          <router-link to="/forgot-password">Forgot password?</router-link>
+          <a href="javascript:void(0)" @click="switchMode('password')">Login with password</a>
         </div>
       </form>
     </div>
@@ -62,18 +107,24 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useRoute } from 'vue-router'
-import { sendEmailCode } from '@/api/auth'
-import { ssoLogin } from '@/api/auth'
+import { sendEmailCode, ssoLogin } from '@/api/auth'
 import { useUserStore } from '@/store/user'
 
-type AuthState = 'idle' | 'code_sent' | 'verifying' | 'authenticated'
+declare const google: any
+
+type LoginMode = 'password' | 'code'
+type CodeState = 'idle' | 'code_sent'
 
 const route = useRoute()
 const userStore = useUserStore()
 
+const loginMode = ref<LoginMode>('password')
 const email = ref('')
+const password = ref('')
 const code = ref('')
-const state = ref<AuthState>('idle')
+const loading = ref(false)
+const codeState = ref<CodeState>('idle')
+const sendCooldown = ref(0)
 
 const client = ref('')
 const redirectUri = ref('')
@@ -82,10 +133,18 @@ const errors = reactive({ email: '', code: '' })
 
 const formatClient = (c: string) => c.charAt(0).toUpperCase() + c.slice(1)
 
+const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || ''
+
 onMounted(() => {
   client.value = (route.query.client as string) || ''
   redirectUri.value = (route.query.redirect_uri as string) || ''
 })
+
+function switchMode(mode: LoginMode) {
+  loginMode.value = mode
+  errors.email = ''
+  errors.code = ''
+}
 
 function validateField(field: 'email' | 'code') {
   if (field === 'email') {
@@ -112,59 +171,105 @@ function validateField(field: 'email' | 'code') {
   errors.code = ''
 }
 
+const canPasswordLogin = computed(() => {
+  return !loading.value && !!email.value.trim() && /^\S+@\S+\.\S+$/.test(email.value) && !!password.value
+})
+
 const canSendCode = computed(() => {
-  return state.value !== 'verifying' && !errors.email && !!email.value.trim() && /^\S+@\S+\.\S+$/.test(email.value)
+  return !loading.value && sendCooldown.value === 0 && !errors.email && !!email.value.trim() && /^\S+@\S+\.\S+$/.test(email.value)
 })
 
 const canVerify = computed(() => {
-  return (state.value === 'code_sent' || state.value === 'verifying') && !errors.email && !errors.code && /^\d{6}$/.test(code.value)
+  return codeState.value === 'code_sent' && !loading.value && !errors.email && !errors.code && /^\d{6}$/.test(code.value)
 })
 
-const handleSendCode = async () => {
-  validateField('email')
-  if (errors.email) return
+function startCooldown() {
+  sendCooldown.value = 60
+  const timer = setInterval(() => {
+    sendCooldown.value--
+    if (sendCooldown.value <= 0) clearInterval(timer)
+  }, 1000)
+}
 
+async function handleSsoRedirect(token: string) {
+  let target = redirectUri.value
+  if (!target) {
+    target = import.meta.env.VITE_SSO_REDIRECT_URI || ''
+  }
+  if (!target) {
+    ElMessage.success('Authenticated')
+    return
+  }
   try {
-    await sendEmailCode({ email: email.value })
-    state.value = 'code_sent'
-    ElMessage.success('If this email is valid, a code has been sent.')
-  } catch (error: any) {
-    ElMessage.error(error.msg || 'Failed to send code, please try again later')
+    const ssoRes = await ssoLogin(target, token)
+    if (ssoRes.code === 0) {
+      window.location.href = target + '?code=' + ssoRes.data
+    } else {
+      ElMessage.error(ssoRes.msg || 'SSO redirect failed')
+    }
+  } catch (e: any) {
+    console.error('SSO redirect failed:', e.msg)
   }
 }
 
-const handleVerify = async () => {
+const handlePasswordLogin = async () => {
   validateField('email')
-  validateField('code')
-  if (errors.email || errors.code) return
+  if (errors.email || !password.value) return
 
-  state.value = 'verifying'
+  loading.value = true
   try {
-    const loginVO = await userStore.loginWithEmailCode({ email: email.value, code: code.value })
-    state.value = 'authenticated'
-
-    const token = loginVO?.token || localStorage.getItem('token')
-
-    if (!redirectUri.value) {
-      if (import.meta.env.VITE_SSO_REDIRECT_URI) {
-        redirectUri.value = import.meta.env.VITE_SSO_REDIRECT_URI
-      }
-    }
-
-    if (!redirectUri.value) {
-      ElMessage.success('Authenticated')
-      return
-    }
-
-    const ssoRes = await ssoLogin(redirectUri.value, token || '')
-    if (ssoRes.code === 0) {
-      window.location.href = redirectUri.value + '?code=' + ssoRes.data
-    } else {
-      ElMessage.error(ssoRes.msg || 'SSO failed')
-    }
+    const loginVO = await userStore.loginWithPassword({ email: email.value, password: password.value })
+    const token = loginVO?.token || localStorage.getItem('token') || ''
+    await handleSsoRedirect(token)
   } catch (error: any) {
-    state.value = 'code_sent'
-    ElMessage.error(error.msg || 'Invalid or expired code')
+    console.error('password login error:', error)
+  } finally {
+    loading.value = false
+  }
+}
+
+const handleGoogleLogin = () => {
+  if (!googleClientId) {
+    ElMessage.error('Google login is not configured')
+    return
+  }
+  const onGoogleSuccess = async (credential: string) => {
+    try {
+      const loginVO = await userStore.loginWithGoogle({ credential })
+      const token = loginVO?.token || localStorage.getItem('token') || ''
+      await handleSsoRedirect(token)
+    } catch (e: any) {
+      console.error('google login error', e)
+    }
+  }
+
+  const onGoogleCodeSuccess = async (code: string) => {
+    try {
+      const loginVO = await userStore.loginWithGoogleCode(code, window.location.origin)
+      const token = loginVO?.token || localStorage.getItem('token') || ''
+      await handleSsoRedirect(token)
+    } catch (e: any) {
+      console.error('google code login error', e)
+    }
+  }
+
+  try {
+    google.accounts.oauth2.initCodeClient({
+      client_id: googleClientId,
+      scope: 'openid email profile',
+      ux_mode: 'popup',
+      callback: (response: any) => {
+        if (response.code) onGoogleCodeSuccess(response.code)
+      }
+    }).requestCode()
+  } catch {
+    google.accounts.id.initialize({
+      client_id: googleClientId,
+      callback: (response: any) => {
+        if (response.credential) onGoogleSuccess(response.credential)
+      }
+    })
+    google.accounts.id.prompt()
   }
 }
 
@@ -237,11 +342,30 @@ html, body {
   border-radius: 28px;
   padding: 12px 0;
   border: 2px solid #d1d3d4;
-  background: #f7f7f7;
+  background: #fff;
   font-size: 1.05rem;
   font-weight: 700;
+  cursor: pointer;
+  color: #333;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.google-btn:hover {
+  background: #f5f5f5;
+  border-color: #bbb;
+}
+
+.google-btn:disabled {
   cursor: not-allowed;
-  color: #666;
+  opacity: 0.6;
+}
+
+.google-icon {
+  flex-shrink: 0;
 }
 
 .divider {
@@ -292,6 +416,7 @@ html, body {
   border-color: #7ca89c;
 }
 
+.submit-btn,
 .send-code-btn {
   margin-top: 6px;
   width: 100%;
@@ -306,6 +431,12 @@ html, body {
   transition: background 0.2s;
 }
 
+.submit-btn:hover,
+.send-code-btn:hover {
+  background: #333;
+}
+
+.submit-btn:disabled,
 .send-code-btn:disabled {
   background: #999;
   cursor: not-allowed;
@@ -334,6 +465,10 @@ html, body {
   transition: background 0.2s;
 }
 
+.verify-btn:hover {
+  background: #333;
+}
+
 .verify-btn:disabled {
   background: #999;
   cursor: not-allowed;
@@ -346,8 +481,9 @@ html, body {
 }
 
 .helper-row a {
-  color: #111;
+  color: #7ca89c;
   text-decoration: none;
+  font-weight: 600;
 }
 
 .helper-row a:hover {
