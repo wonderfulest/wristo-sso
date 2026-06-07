@@ -1,8 +1,6 @@
 <template>
   <div class="reset-page">
-    <div class="reset-logo">
-      <span class="logo-bold">Wristo<span class="logo-green">Io</span></span>
-    </div>
+    <BrandLogo class="reset-logo" />
     <h2 class="reset-title">Reset Password</h2>
     <div v-if="loading" class="reset-loading">Validating token...</div>
     <div v-else>
@@ -47,6 +45,7 @@ import { ref, reactive, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { verifyResetToken, resetPassword } from '@/api/auth'
+import BrandLogo from '@/components/BrandLogo.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -137,20 +136,7 @@ const handleReset = async () => {
   }
 }
 .reset-logo {
-  font-size: 2.2rem;
-  font-weight: bold;
   margin-bottom: 18px;
-  letter-spacing: 1px;
-  text-align: center;
-}
-.logo-bold {
-  color: #222;
-  font-weight: 700;
-}
-.logo-green {
-  color: #7ca89c;
-  font-weight: 700;
-  margin-left: 2px;
 }
 .reset-title {
   font-size: 1.5rem;

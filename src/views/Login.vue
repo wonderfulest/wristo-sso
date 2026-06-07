@@ -1,9 +1,7 @@
 <template>
   <div class="login-page">
-    <div class="login-logo">
-      <span class="logo-bold">Wristo<span class="logo-green">Io</span></span>
-    </div>
-    <h2 class="login-title">{{ client ? formatClient(client) + ' Login' : 'SSO Login' }}</h2>
+    <BrandLogo class="login-logo" />
+    <h2 class="login-title">SSO Login</h2>
     <form class="login-form" @submit.prevent="handleLogin">
       <label class="login-label" for="email">Email Address</label>
       <input
@@ -46,6 +44,7 @@ import { useUserStore } from '@/store/user'
 import { useRoute } from 'vue-router'
 import { ssoLogin } from '@/api/auth'
 import { ApiResponse } from '@/types/api'
+import BrandLogo from '@/components/BrandLogo.vue'
 
 const email = ref('')
 const password = ref('')
@@ -53,15 +52,9 @@ const rememberMe = ref(false)
 const userStore = useUserStore()
 const route = useRoute()
 
-const client = ref('')
 const redirectUri = ref('')
 
-const formatClient = (client: string) => {
-  return client.charAt(0).toUpperCase() + client.slice(1)
-}
-
 onMounted(() => {
-  client.value = route.query.client as string || ''
   // 获取 URL 查询参数中的 redirect_uri
   redirectUri.value = route.query.redirect_uri as string || ''
   console.log('redirectUri', redirectUri.value)
@@ -117,20 +110,7 @@ html, body {
   }
 }
 .login-logo {
-  font-size: 2.2rem;
-  font-weight: bold;
   margin-bottom: 18px;
-  letter-spacing: 1px;
-  text-align: center;
-}
-.logo-bold {
-  color: #444;
-  font-weight: 700;
-}
-.logo-green {
-  color: #7ca89c;
-  font-weight: 700;
-  margin-left: 2px;
 }
 .login-title {
   font-size: 1.5rem;

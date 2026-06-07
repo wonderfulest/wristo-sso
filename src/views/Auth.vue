@@ -1,10 +1,6 @@
 <template>
   <div class="auth-page">
-    <div class="auth-logo">
-      <span class="logo-bold">Wristo<span class="logo-green">Io</span></span>
-    </div>
-
-    <h2 class="auth-title">{{ client ? formatClient(client) + ' Continue' : 'Continue' }}</h2>
+    <BrandLogo class="auth-logo" />
 
     <div class="auth-card">
       <button class="google-btn" type="button" :disabled="loading" @click="handleGoogleLogin">
@@ -109,6 +105,7 @@ import { ElMessage } from 'element-plus'
 import { useRoute } from 'vue-router'
 import { sendEmailCode, ssoLogin } from '@/api/auth'
 import { useUserStore } from '@/store/user'
+import BrandLogo from '@/components/BrandLogo.vue'
 
 declare const google: any
 
@@ -126,17 +123,13 @@ const loading = ref(false)
 const codeState = ref<CodeState>('idle')
 const sendCooldown = ref(0)
 
-const client = ref('')
 const redirectUri = ref('')
 
 const errors = reactive({ email: '', code: '' })
 
-const formatClient = (c: string) => c.charAt(0).toUpperCase() + c.slice(1)
-
 const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || ''
 
 onMounted(() => {
-  client.value = (route.query.client as string) || ''
   redirectUri.value = (route.query.redirect_uri as string) || ''
 })
 
@@ -337,22 +330,7 @@ html, body {
 }
 
 .auth-logo {
-  font-size: 2.2rem;
-  font-weight: bold;
   margin-bottom: 18px;
-  letter-spacing: 1px;
-  text-align: center;
-}
-
-.logo-bold {
-  color: #444;
-  font-weight: 700;
-}
-
-.logo-green {
-  color: #7ca89c;
-  font-weight: 700;
-  margin-left: 2px;
 }
 
 .auth-title {

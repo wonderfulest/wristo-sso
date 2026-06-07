@@ -1,9 +1,7 @@
 <template>
   <div class="register-page">
-    <div class="register-logo">
-      <span class="logo-bold">Wristo<span class="logo-green">Io</span></span>
-    </div>
-    <h2 class="register-title">{{ client ? formatClient(client) + ' Sign Up' : 'Developer Sign Up' }}</h2>
+    <BrandLogo class="register-logo" />
+    <h2 class="register-title">Sign Up</h2>
     <form class="register-form" @submit.prevent="handleRegister">
       <label class="register-label" for="username">Full Name</label>
       <input
@@ -67,6 +65,7 @@ import { ref, reactive, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useUserStore } from '@/store/user'
 import { ElMessage } from 'element-plus'
+import BrandLogo from '@/components/BrandLogo.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -86,10 +85,6 @@ const errors = reactive({
 
 const client = ref('')
 const redirectUri = ref('')
-
-const formatClient = (client: string) => {
-  return client.charAt(0).toUpperCase() + client.slice(1)
-}
 
 onMounted(() => {
   client.value = route.query.client as string || ''
@@ -186,20 +181,7 @@ html, body {
   }
 }
 .register-logo {
-  font-size: 2.2rem;
-  font-weight: bold;
   margin-bottom: 18px;
-  letter-spacing: 1px;
-  text-align: center;
-}
-.logo-bold {
-  color: #222;
-  font-weight: 700;
-}
-.logo-green {
-  color: #7ca89c;
-  font-weight: 700;
-  margin-left: 2px;
 }
 .register-title {
   font-size: 1.5rem;

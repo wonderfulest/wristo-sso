@@ -1,8 +1,6 @@
 <template>
   <div class="forgot-page">
-    <div class="forgot-logo">
-      <span class="logo-bold">Wristo<span class="logo-green">Io</span></span>
-    </div>
+    <BrandLogo class="forgot-logo" />
     <h2 class="forgot-title">Forgot Password</h2>
     <form class="forgot-form" @submit.prevent="handleForgot">
       <label class="forgot-label" for="email">Email Address</label>
@@ -30,6 +28,7 @@ import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { requestResetPassword } from '@/api/auth'
+import BrandLogo from '@/components/BrandLogo.vue'
 
 const router = useRouter()
 const email = ref('')
@@ -88,20 +87,7 @@ html, body {
   }
 }
 .forgot-logo {
-  font-size: 2.2rem;
-  font-weight: bold;
   margin-bottom: 18px;
-  letter-spacing: 1px;
-  text-align: center;
-}
-.logo-bold {
-  color: #222;
-  font-weight: 700;
-}
-.logo-green {
-  color: #7ca89c;
-  font-weight: 700;
-  margin-left: 2px;
 }
 .forgot-title {
   font-size: 1.5rem;

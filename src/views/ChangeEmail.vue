@@ -1,8 +1,6 @@
 <template>
   <div class="change-email-page">
-    <div class="change-email-logo">
-      <span class="logo-bold">Wristo<span class="logo-green">Io</span></span>
-    </div>
+    <BrandLogo class="change-email-logo" />
 
     <h2 class="change-email-title">Change Email</h2>
 
@@ -75,6 +73,7 @@ import { computed, onMounted, reactive, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { sendEmailCode, changeEmailByCode } from '@/api/auth'
+import BrandLogo from '@/components/BrandLogo.vue'
 
 const route = useRoute()
 
@@ -215,22 +214,7 @@ async function handleChangeEmail() {
 }
 
 .change-email-logo {
-  font-size: 2.2rem;
-  font-weight: bold;
   margin-bottom: 18px;
-  letter-spacing: 1px;
-  text-align: center;
-}
-
-.logo-bold {
-  color: #444;
-  font-weight: 700;
-}
-
-.logo-green {
-  color: #7ca89c;
-  font-weight: 700;
-  margin-left: 2px;
 }
 
 .change-email-title {
