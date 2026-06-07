@@ -1,60 +1,60 @@
 <template>
   <div class="register-page">
     <BrandLogo class="register-logo" />
-    <h2 class="register-title">Sign Up</h2>
+    <h2 class="register-title">{{ t('register.title') }}</h2>
     <form class="register-form" @submit.prevent="handleRegister">
-      <label class="register-label" for="username">Full Name</label>
+      <label class="register-label" for="username">{{ t('register.fullName') }}</label>
       <input
         id="username"
         v-model="username"
         type="text"
         class="register-input"
         required
-        placeholder="Please enter your full name"
+        :placeholder="t('register.fullNamePlaceholder')"
         @blur="validateField('username')"
       />
       <div v-if="errors.username" class="input-error">{{ errors.username }}</div>
 
-      <label class="register-label" for="email">Email Address</label>
+      <label class="register-label" for="email">{{ t('auth.email') }}</label>
       <input
         id="email"
         v-model="email"
         type="email"
         class="register-input"
         required
-        placeholder="Please enter your email"
+        :placeholder="t('register.emailPlaceholder')"
         @blur="validateField('email')"
       />
       <div v-if="errors.email" class="input-error">{{ errors.email }}</div>
 
-      <label class="register-label" for="password">Password</label>
+      <label class="register-label" for="password">{{ t('auth.password') }}</label>
       <input
         id="password"
         v-model="password"
         type="password"
         class="register-input"
         required
-        placeholder="Please enter your password"
+        :placeholder="t('register.passwordPlaceholder')"
         @blur="validateField('password')"
       />
       <div v-if="errors.password" class="input-error">{{ errors.password }}</div>
 
-      <label class="register-label" for="confirmPassword">Confirm Password</label>
+      <label class="register-label" for="confirmPassword">{{ t('register.confirmPassword') }}</label>
       <input
         id="confirmPassword"
         v-model="confirmPassword"
         type="password"
         class="register-input"
         required
-        placeholder="Please confirm your password"
+        :placeholder="t('register.confirmPasswordPlaceholder')"
         @blur="validateField('confirmPassword')"
       />
       <div v-if="errors.confirmPassword" class="input-error">{{ errors.confirmPassword }}</div>
 
-      <button class="register-btn" type="submit">Continue</button>
+      <button class="register-btn" type="submit">{{ t('auth.continue') }}</button>
       <div class="register-tip">
-        Already have an account?
-        <router-link to="/login">Log In</router-link>
+        {{ t('register.hasAccount') }}
+        <router-link to="/login">{{ t('register.logIn') }}</router-link>
       </div>
     </form>
   </div>
@@ -66,10 +66,12 @@ import { useRouter, useRoute } from 'vue-router'
 import { useUserStore } from '@/store/user'
 import { ElMessage } from 'element-plus'
 import BrandLogo from '@/components/BrandLogo.vue'
+import { useI18n } from '@/i18n'
 
 const router = useRouter()
 const route = useRoute()
 const userStore = useUserStore()
+const { t } = useI18n()
 
 const username = ref('')
 const email = ref('')
@@ -95,34 +97,34 @@ function validateField(field: string) {
   switch (field) {
     case 'username':
       if (!username.value.trim()) {
-        errors.username = 'Username must not be blank.'
+        errors.username = t('validation.usernameRequired')
       } else if (username.value.length < 4 || username.value.length > 20) {
-        errors.username = 'Username length must be between 4 and 20 characters.'
+        errors.username = t('validation.usernameLength')
       } else {
         errors.username = ''
       }
       break
     case 'password':
       if (!password.value.trim()) {
-        errors.password = 'Password must not be blank.'
+        errors.password = t('validation.passwordRequired')
       } else if (password.value.length < 6 || password.value.length > 20) {
-        errors.password = 'Password length must be between 6 and 20 characters.'
+        errors.password = t('validation.passwordLength')
       } else {
         errors.password = ''
       }
       break
     case 'email':
       if (!email.value.trim()) {
-        errors.email = 'Email must not be blank.'
+        errors.email = t('validation.emailRequired')
       } else if (!/^\S+@\S+\.\S+$/.test(email.value)) {
-        errors.email = 'Invalid email format.'
+        errors.email = t('validation.emailInvalid')
       } else {
         errors.email = ''
       }
       break
     case 'confirmPassword':
       if (confirmPassword.value !== password.value) {
-        errors.confirmPassword = 'Passwords do not match.'
+        errors.confirmPassword = t('validation.passwordMismatch')
       } else {
         errors.confirmPassword = ''
       }
@@ -149,12 +151,12 @@ const handleRegister = async () => {
       password: password.value,
       source: client.value
     })
-    ElMessage.success('Registration successful, redirecting to login page...')
+    ElMessage.success(t('register.success'))
     setTimeout(() => {
       router.push({ path: '/login', query: route.query })
     }, 1200)
   } catch (error: any) {
-    alert(error.msg || 'Registration failed')
+    alert(error.msg || t('register.failed'))
   }
 }
 </script>

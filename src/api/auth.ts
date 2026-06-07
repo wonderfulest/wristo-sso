@@ -5,13 +5,21 @@ export interface GoogleLoginDTO {
   credential: string
 }
 
+export interface SsoSessionData {
+  authenticated: boolean
+  userId?: number
+}
+
+export const getSsoSession = (): Promise<ApiResponse<SsoSessionData>> => {
+  return instance.get('/sso/session')
+}
+
 // SSO 登录下发 code
-export const ssoLogin = (redirectUri: string, token: string): Promise<ApiResponse<string>> => {
-  return instance.post('/sso/login', { redirectUri }, {
-    headers: {
-      Authorization: `Bearer ${token}`
-    }
-  })
+export const ssoLogin = (clientId: string, redirectUri: string, token?: string): Promise<ApiResponse<string>> => {
+  const config = token
+    ? { headers: { Authorization: `Bearer ${token}` } }
+    : undefined
+  return instance.post('/sso/login', { clientId, redirectUri }, config)
 }
 
 export interface LoginByEmailDTO {
@@ -74,4 +82,3 @@ export const verifyResetToken = (token: string): Promise<ApiResponse<boolean>> =
 export const resetPassword = (token: string, newPassword: string): Promise<ApiResponse<boolean>> => {
   return instance.post('/public/auth/reset-password/submit', { token, newPassword })
 }
-

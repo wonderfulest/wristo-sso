@@ -2,18 +2,18 @@
   <div class="change-email-page">
     <BrandLogo class="change-email-logo" />
 
-    <h2 class="change-email-title">Change Email</h2>
+    <h2 class="change-email-title">{{ t('changeEmail.title') }}</h2>
 
     <div class="change-email-card">
       <!-- Step 1: Enter new email & send code -->
       <div v-if="!success">
         <div class="current-email-row" v-if="currentEmail">
-          <span class="current-email-label">Current email</span>
+          <span class="current-email-label">{{ t('changeEmail.currentEmail') }}</span>
           <span class="current-email-value">{{ currentEmail }}</span>
         </div>
 
         <form class="change-email-form" @submit.prevent="handleChangeEmail">
-          <label class="form-label" for="newEmail">New email address</label>
+          <label class="form-label" for="newEmail">{{ t('changeEmail.newEmail') }}</label>
           <input
             id="newEmail"
             v-model="newEmail"
@@ -22,7 +22,7 @@
             autocomplete="email"
             required
             :disabled="loading"
-            placeholder="Enter your new email"
+            :placeholder="t('changeEmail.newEmailPlaceholder')"
             @blur="validateField('email')"
           />
           <div v-if="errors.email" class="input-error">{{ errors.email }}</div>
@@ -33,10 +33,10 @@
             :disabled="!canSendCode"
             @click="handleSendCode"
           >
-            {{ sendCooldown > 0 ? `Resend code (${sendCooldown}s)` : (codeSent ? 'Resend code' : 'Send code') }}
+            {{ sendCodeLabel }}
           </button>
 
-          <label class="form-label" for="code">Verification code</label>
+          <label class="form-label" for="code">{{ t('auth.verificationCode') }}</label>
           <div class="code-row">
             <input
               id="code"
@@ -44,14 +44,14 @@
               inputmode="numeric"
               maxlength="6"
               class="form-input code-input"
-              placeholder="6-digit code"
+              :placeholder="t('auth.codePlaceholder')"
               required
               :disabled="!codeSent || loading"
               @input="onCodeInput"
               @blur="validateField('code')"
             />
             <button class="verify-btn" type="submit" :disabled="!canSubmit">
-              {{ loading ? 'Saving...' : 'Confirm' }}
+              {{ loading ? t('changeEmail.saving') : t('changeEmail.confirm') }}
             </button>
           </div>
           <div v-if="errors.code" class="input-error">{{ errors.code }}</div>
@@ -61,8 +61,8 @@
       <!-- Step 2: Success -->
       <div v-else class="success-block">
         <div class="success-icon">&#10003;</div>
-        <p class="success-text">Email changed successfully!</p>
-        <p class="success-hint">Redirecting back...</p>
+        <p class="success-text">{{ t('changeEmail.success') }}</p>
+        <p class="success-hint">{{ t('changeEmail.redirecting') }}</p>
       </div>
     </div>
   </div>
@@ -74,8 +74,10 @@ import { useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { sendEmailCode, changeEmailByCode } from '@/api/auth'
 import BrandLogo from '@/components/BrandLogo.vue'
+import { useI18n } from '@/i18n'
 
 const route = useRoute()
+const { t } = useI18n()
 
 const currentEmail = ref('')
 const newEmail = ref('')
@@ -99,22 +101,22 @@ onMounted(() => {
   }
 
   if (!token && !localStorage.getItem('token')) {
-    ElMessage.error('Please login first')
+    ElMessage.error(t('account.loginFirst'))
   }
 })
 
 function validateField(field: 'email' | 'code') {
   if (field === 'email') {
     if (!newEmail.value.trim()) {
-      errors.email = 'Email must not be blank.'
+      errors.email = t('validation.emailRequired')
       return
     }
     if (!/^\S+@\S+\.\S+$/.test(newEmail.value)) {
-      errors.email = 'Invalid email format.'
+      errors.email = t('validation.emailInvalid')
       return
     }
     if (newEmail.value.trim().toLowerCase() === currentEmail.value.toLowerCase()) {
-      errors.email = 'New email must be different from current email.'
+      errors.email = t('validation.emailDifferent')
       return
     }
     errors.email = ''
@@ -122,11 +124,11 @@ function validateField(field: 'email' | 'code') {
   }
 
   if (!code.value.trim()) {
-    errors.code = 'Code must not be blank.'
+    errors.code = t('validation.codeRequired')
     return
   }
   if (!/^\d{6}$/.test(code.value)) {
-    errors.code = 'Invalid code format.'
+    errors.code = t('validation.codeInvalid')
     return
   }
   errors.code = ''
@@ -138,6 +140,13 @@ const canSendCode = computed(() => {
 
 const canSubmit = computed(() => {
   return codeSent.value && !loading.value && !errors.email && !errors.code && /^\d{6}$/.test(code.value)
+})
+
+const sendCodeLabel = computed(() => {
+  if (sendCooldown.value > 0) {
+    return t('auth.resendCodeSeconds', { seconds: sendCooldown.value })
+  }
+  return codeSent.value ? t('auth.resendCode') : t('auth.sendCode')
 })
 
 function startCooldown() {
@@ -161,7 +170,7 @@ async function handleSendCode() {
     await sendEmailCode({ email: newEmail.value.trim() })
     codeSent.value = true
     startCooldown()
-    ElMessage.success('Verification code sent!')
+    ElMessage.success(t('changeEmail.codeSent'))
   } catch (e: any) {
     console.error('change-email send code error', e)
   } finally {
@@ -181,7 +190,7 @@ async function handleChangeEmail() {
       code: code.value.trim()
     })
     success.value = true
-    ElMessage.success('Email changed successfully!')
+    ElMessage.success(t('changeEmail.success'))
 
     setTimeout(() => {
       if (redirectUri.value) {

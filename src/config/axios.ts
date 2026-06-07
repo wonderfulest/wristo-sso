@@ -2,10 +2,11 @@ import axios from 'axios'
 import { ElMessage } from 'element-plus'
 import { BizErrorCode } from '@/constant/errorCode'
 import type { ApiResponse } from '@/types/api'
-import router from '@/router'
+import { redirectToAuthPage } from '@/utils/authRedirect'
 
 const instance = axios.create({
   baseURL: '/api', // 走 vite 代理
+  withCredentials: true,
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json'
@@ -33,15 +34,12 @@ instance.interceptors.response.use(
     }
   },
   error => {
-    if (error.response?.status === 403) {
-      // 清除本地存储的 token 和用户信息
-      localStorage.removeItem('token')
-      localStorage.removeItem('userInfo')
+    const status = error.response?.status
+    if (status === 401 || status === 403) {
       ElMessage.error('登录已过期，请重新登录')
-      // 跳转到登录页面
-      router.push('/auth')
+      redirectToAuthPage()
     } else {
-    ElMessage.error('网络错误，请稍后重试')
+      ElMessage.error('网络错误，请稍后重试')
     }
     return Promise.reject(error)
   }

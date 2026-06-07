@@ -1,25 +1,28 @@
 <template>
   <div class="auth-page">
     <BrandLogo class="auth-logo" />
+    <div class="auth-context">{{ clientLabel }}</div>
+    <h1 class="auth-heading">{{ t('auth.title') }}</h1>
+    <p class="auth-subtitle">{{ t('auth.subtitle') }}</p>
 
     <div class="auth-card">
       <button class="google-btn" type="button" :disabled="loading" @click="handleGoogleLogin">
-        <svg class="google-icon" viewBox="0 0 24 24" width="20" height="20">
+        <svg class="google-icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
           <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/>
           <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
           <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
           <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
         </svg>
-        Continue with Google
+        {{ t('auth.google') }}
       </button>
 
       <div class="divider">
-        <span class="divider-text">or</span>
+        <span class="divider-text">{{ t('auth.or') }}</span>
       </div>
 
       <!-- Password login (default) -->
       <form v-if="loginMode === 'password'" class="auth-form" @submit.prevent="handlePasswordLogin">
-        <label class="auth-label" for="email">Email address</label>
+        <label class="auth-label" for="email">{{ t('auth.email') }}</label>
         <input
           id="email"
           v-model="email"
@@ -32,7 +35,7 @@
         />
         <div v-if="errors.email" class="input-error">{{ errors.email }}</div>
 
-        <label class="auth-label" for="password">Password</label>
+        <label class="auth-label" for="password">{{ t('auth.password') }}</label>
         <input
           id="password"
           v-model="password"
@@ -44,17 +47,17 @@
         />
 
         <button class="submit-btn" type="submit" :disabled="!canPasswordLogin">
-          {{ loading ? 'Logging in...' : 'Continue' }}
+          {{ loading ? t('auth.loggingIn') : t('auth.continue') }}
         </button>
 
         <div class="helper-row">
-          <a href="javascript:void(0)" @click="switchMode('code')">Login with verification code</a>
+          <a href="javascript:void(0)" @click="switchMode('code')">{{ t('auth.loginWithCode') }}</a>
         </div>
       </form>
 
       <!-- Email code login -->
       <form v-else class="auth-form" @submit.prevent="handleVerify">
-        <label class="auth-label" for="email2">Email address</label>
+        <label class="auth-label" for="email2">{{ t('auth.email') }}</label>
         <input
           id="email2"
           v-model="email"
@@ -68,10 +71,10 @@
         <div v-if="errors.email" class="input-error">{{ errors.email }}</div>
 
         <button class="send-code-btn" type="button" :disabled="!canSendCode" @click="handleSendCode">
-          {{ sendCooldown > 0 ? `Resend code (${sendCooldown}s)` : (codeState === 'code_sent' ? 'Resend code' : 'Send code') }}
+          {{ sendCodeLabel }}
         </button>
 
-        <label class="auth-label" for="code">Verification code</label>
+        <label class="auth-label" for="code">{{ t('auth.verificationCode') }}</label>
         <div class="code-row">
           <input
             id="code"
@@ -79,20 +82,20 @@
             inputmode="numeric"
             maxlength="6"
             class="auth-input code-input"
-            placeholder="6-digit code"
+            :placeholder="t('auth.codePlaceholder')"
             required
             :disabled="codeState !== 'code_sent' && !loading"
             @input="onCodeInput"
             @blur="validateField('code')"
           />
           <button class="verify-btn" type="submit" :disabled="!canVerify">
-            {{ loading ? 'Verifying...' : 'Verify' }}
+            {{ loading ? t('auth.verifying') : t('auth.verify') }}
           </button>
         </div>
         <div v-if="errors.code" class="input-error">{{ errors.code }}</div>
 
         <div class="helper-row">
-          <a href="javascript:void(0)" @click="switchMode('password')">Login with password</a>
+          <a href="javascript:void(0)" @click="switchMode('password')">{{ t('auth.loginWithPassword') }}</a>
         </div>
       </form>
     </div>
@@ -103,9 +106,10 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useRoute } from 'vue-router'
-import { sendEmailCode, ssoLogin } from '@/api/auth'
+import { getSsoSession, sendEmailCode, ssoLogin } from '@/api/auth'
 import { useUserStore } from '@/store/user'
 import BrandLogo from '@/components/BrandLogo.vue'
+import { useI18n } from '@/i18n'
 
 declare const google: any
 
@@ -114,6 +118,7 @@ type CodeState = 'idle' | 'code_sent'
 
 const route = useRoute()
 const userStore = useUserStore()
+const { t } = useI18n()
 
 const loginMode = ref<LoginMode>('password')
 const email = ref('')
@@ -124,13 +129,35 @@ const codeState = ref<CodeState>('idle')
 const sendCooldown = ref(0)
 
 const redirectUri = ref('')
+const clientId = computed(() => (route.query.client as string) || 'store')
 
 const errors = reactive({ email: '', code: '' })
 
 const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || ''
 
-onMounted(() => {
+const clientLabel = computed(() => {
+  const client = (route.query.client as string) || ''
+  if (client === 'studio') return 'Wristo Studio'
+  if (client === 'store') return 'Wristo Store'
+  if (client === 'merchant') return 'Wristo Merchant'
+  if (client === 'growth') return 'Wristo Growth'
+  return 'Wristo SSO'
+})
+
+onMounted(async () => {
   redirectUri.value = (route.query.redirect_uri as string) || ''
+  if (!redirectUri.value) {
+    return
+  }
+
+  try {
+    const session = await getSsoSession()
+    if (session.code === 0 && session.data?.authenticated) {
+      await handleSsoRedirect('')
+    }
+  } catch (e) {
+    console.info('No active SSO session', e)
+  }
 })
 
 function switchMode(mode: LoginMode) {
@@ -142,11 +169,11 @@ function switchMode(mode: LoginMode) {
 function validateField(field: 'email' | 'code') {
   if (field === 'email') {
     if (!email.value.trim()) {
-      errors.email = 'Email must not be blank.'
+      errors.email = t('validation.emailRequired')
       return
     }
     if (!/^\S+@\S+\.\S+$/.test(email.value)) {
-      errors.email = 'Invalid email format.'
+      errors.email = t('validation.emailInvalid')
       return
     }
     errors.email = ''
@@ -154,11 +181,11 @@ function validateField(field: 'email' | 'code') {
   }
 
   if (!code.value.trim()) {
-    errors.code = 'Code must not be blank.'
+    errors.code = t('validation.codeRequired')
     return
   }
   if (!/^\d{6}$/.test(code.value)) {
-    errors.code = 'Invalid code format.'
+    errors.code = t('validation.codeInvalid')
     return
   }
   errors.code = ''
@@ -174,6 +201,13 @@ const canSendCode = computed(() => {
 
 const canVerify = computed(() => {
   return codeState.value === 'code_sent' && !loading.value && !errors.email && !errors.code && /^\d{6}$/.test(code.value)
+})
+
+const sendCodeLabel = computed(() => {
+  if (sendCooldown.value > 0) {
+    return t('auth.resendCodeSeconds', { seconds: sendCooldown.value })
+  }
+  return codeState.value === 'code_sent' ? t('auth.resendCode') : t('auth.sendCode')
 })
 
 function startCooldown() {
@@ -193,7 +227,7 @@ async function handleSendCode() {
     await sendEmailCode({ email: email.value.trim() })
     codeState.value = 'code_sent'
     startCooldown()
-    ElMessage.success('If this email is valid, a code has been sent.')
+    ElMessage.success(t('auth.codeSent'))
   } catch (e: any) {
     console.error('send code error', e)
   } finally {
@@ -224,15 +258,15 @@ async function handleSsoRedirect(token: string) {
     target = import.meta.env.VITE_SSO_REDIRECT_URI || ''
   }
   if (!target) {
-    ElMessage.success('Authenticated')
+    ElMessage.success(t('auth.authenticated'))
     return
   }
   try {
-    const ssoRes = await ssoLogin(target, token)
+    const ssoRes = await ssoLogin(clientId.value, target, token || undefined)
     if (ssoRes.code === 0) {
       window.location.href = target + '?code=' + ssoRes.data
     } else {
-      ElMessage.error(ssoRes.msg || 'SSO redirect failed')
+      ElMessage.error(ssoRes.msg || t('auth.ssoRedirectFailed'))
     }
   } catch (e: any) {
     console.error('SSO redirect failed:', e.msg)
@@ -257,7 +291,7 @@ const handlePasswordLogin = async () => {
 
 const handleGoogleLogin = () => {
   if (!googleClientId) {
-    ElMessage.error('Google login is not configured')
+    ElMessage.error(t('auth.googleNotConfigured'))
     return
   }
   const onGoogleSuccess = async (credential: string) => {
@@ -307,68 +341,96 @@ function onCodeInput() {
 
 <style scoped>
 html, body {
-  height: 100vh;
-  overflow: hidden;
+  min-height: 100%;
 }
 
 .auth-page {
-  min-height: 0;
-  height: 100%;
+  min-height: 100%;
   flex: 1 0 auto;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  padding-top: 40px;
+  padding: 12px 20px 28px;
+  box-sizing: border-box;
 }
 
 @media (max-width: 600px) {
   .auth-page {
-    height: 100%;
-    padding-top: 24px;
+    padding: 18px 16px 26px;
   }
 }
 
 .auth-logo {
-  margin-bottom: 18px;
+  margin-bottom: 12px;
 }
 
-.auth-title {
-  font-size: 1.5rem;
-  font-weight: bold;
-  margin-bottom: 22px;
+.auth-context {
+  color: #0f6b68;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0;
+  line-height: 1.2;
+  margin-bottom: 8px;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.auth-heading {
+  color: #111817;
+  font-size: clamp(2rem, 6vw, 2.35rem);
+  font-weight: 800;
+  line-height: 1.06;
+  margin: 0;
+  text-align: center;
+}
+
+.auth-subtitle {
+  color: #596460;
+  font-size: 1rem;
+  line-height: 1.55;
+  margin: 10px auto 16px;
+  max-width: 360px;
   text-align: center;
 }
 
 .auth-card {
   width: 420px;
   max-width: calc(100vw - 40px);
-  background: #fff;
-  border: 2px solid #e6e8ea;
-  border-radius: 16px;
-  padding: 18px;
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid #dfe7e4;
+  border-radius: 8px;
+  box-shadow: 0 24px 70px rgba(24, 38, 34, 0.12);
+  box-sizing: border-box;
+  padding: 20px;
 }
 
 .google-btn {
   width: 100%;
-  border-radius: 28px;
-  padding: 12px 0;
-  border: 2px solid #d1d3d4;
+  min-height: 48px;
+  border-radius: 8px;
+  padding: 12px 16px;
+  border: 1px solid #cfd9d5;
   background: #fff;
-  font-size: 1.05rem;
-  font-weight: 700;
+  font-size: 1rem;
+  font-weight: 750;
   cursor: pointer;
-  color: #333;
+  color: #1c2623;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  transition: background 0.2s, border-color 0.2s;
+  gap: 10px;
+  transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
 }
 
 .google-btn:hover {
-  background: #f5f5f5;
-  border-color: #bbb;
+  background: #f7faf9;
+  border-color: #9db2aa;
+  box-shadow: 0 8px 20px rgba(24, 38, 34, 0.08);
+}
+
+.google-btn:active {
+  transform: translateY(1px);
 }
 
 .google-btn:disabled {
@@ -383,8 +445,8 @@ html, body {
 .divider {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin: 16px 0;
+  gap: 12px;
+  margin: 18px 0;
 }
 
 .divider::before,
@@ -396,8 +458,10 @@ html, body {
 }
 
 .divider-text {
-  font-size: 0.95rem;
-  color: #666;
+  font-size: 0.82rem;
+  color: #74817c;
+  font-weight: 700;
+  text-transform: uppercase;
 }
 
 .auth-form {
@@ -407,50 +471,65 @@ html, body {
 }
 
 .auth-label {
-  font-weight: 800;
-  margin-bottom: 4px;
-  margin-top: 6px;
+  color: #24312d;
+  font-size: 0.9rem;
+  font-weight: 750;
+  margin-top: 8px;
   text-align: left;
 }
 
 .auth-input {
+  width: 100%;
+  min-height: 48px;
   padding: 12px 14px;
-  border: 3px solid #d1d3d4;
-  border-radius: 10px;
+  border: 1px solid #cdd9d5;
+  border-radius: 8px;
   font-size: 1rem;
-  margin-bottom: 2px;
-  background: #fff;
+  color: #17201d;
+  background: #fbfdfc;
   outline: none;
-  transition: border 0.2s;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+  box-sizing: border-box;
 }
 
 .auth-input:focus {
-  border-color: #7ca89c;
+  border-color: #0f6b68;
+  background: #fff;
+  box-shadow: 0 0 0 4px rgba(15, 107, 104, 0.13);
 }
 
 .submit-btn,
 .send-code-btn {
-  margin-top: 6px;
+  min-height: 48px;
+  margin-top: 10px;
   width: 100%;
-  background: #111;
+  background: #0f6b68;
   color: #fff;
-  font-size: 1.05rem;
-  font-weight: bold;
+  font-size: 1rem;
+  font-weight: 800;
   border: none;
-  border-radius: 28px;
-  padding: 12px 0;
+  border-radius: 8px;
+  padding: 12px 16px;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: background 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
 }
 
 .submit-btn:hover,
 .send-code-btn:hover {
-  background: #333;
+  background: #0b5553;
+  box-shadow: 0 10px 22px rgba(15, 107, 104, 0.22);
+}
+
+.submit-btn:active,
+.send-code-btn:active,
+.verify-btn:active {
+  transform: translateY(1px);
 }
 
 .submit-btn:disabled,
 .send-code-btn:disabled {
-  background: #999;
+  background: #9aa6a2;
+  box-shadow: none;
   cursor: not-allowed;
 }
 
@@ -465,24 +544,27 @@ html, body {
 }
 
 .verify-btn {
-  min-width: 120px;
-  background: #111;
+  min-width: 112px;
+  min-height: 48px;
+  background: #0f6b68;
   color: #fff;
-  font-size: 1.05rem;
-  font-weight: bold;
+  font-size: 1rem;
+  font-weight: 800;
   border: none;
-  border-radius: 28px;
+  border-radius: 8px;
   padding: 12px 14px;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: background 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
 }
 
 .verify-btn:hover {
-  background: #333;
+  background: #0b5553;
+  box-shadow: 0 10px 22px rgba(15, 107, 104, 0.22);
 }
 
 .verify-btn:disabled {
-  background: #999;
+  background: #9aa6a2;
+  box-shadow: none;
   cursor: not-allowed;
 }
 
@@ -493,9 +575,9 @@ html, body {
 }
 
 .helper-row a {
-  color: #7ca89c;
+  color: #0f6b68;
   text-decoration: none;
-  font-weight: 600;
+  font-weight: 750;
 }
 
 .helper-row a:hover {
@@ -503,8 +585,45 @@ html, body {
 }
 
 .input-error {
-  color: #e53935;
-  font-size: 0.95rem;
-  margin-top: -6px;
+  color: #b42318;
+  font-size: 0.9rem;
+  font-weight: 650;
+  line-height: 1.4;
+  margin-top: -2px;
+  text-align: left;
+}
+
+button:focus-visible,
+.auth-input:focus-visible {
+  outline: 3px solid rgba(15, 107, 104, 0.28);
+  outline-offset: 2px;
+}
+
+@media (max-width: 600px) {
+  .auth-card {
+    max-width: 100%;
+    padding: 18px;
+  }
+
+  .auth-heading {
+    font-size: 2rem;
+  }
+
+  .code-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .verify-btn {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+  }
 }
 </style>

@@ -1,39 +1,39 @@
 <template>
   <div class="reset-page">
     <BrandLogo class="reset-logo" />
-    <h2 class="reset-title">Reset Password</h2>
-    <div v-if="loading" class="reset-loading">Validating token...</div>
+    <h2 class="reset-title">{{ t('reset.title') }}</h2>
+    <div v-if="loading" class="reset-loading">{{ t('reset.validating') }}</div>
     <div v-else>
       <div v-if="!tokenValid" class="reset-error">
-        Token validation failed. Redirecting to Forgot Password...
+        {{ t('reset.tokenFailed') }}
       </div>
       <form v-else class="reset-form" @submit.prevent="handleReset">
-        <label class="reset-label" for="password">New Password</label>
+        <label class="reset-label" for="password">{{ t('reset.newPassword') }}</label>
         <input
           id="password"
           v-model="password"
           type="password"
           class="reset-input"
           required
-          placeholder="Please enter your new password"
+          :placeholder="t('reset.newPasswordPlaceholder')"
           @blur="validateField('password')"
         />
         <div v-if="errors.password" class="input-error">{{ errors.password }}</div>
-        <label class="reset-label" for="confirmPassword">Confirm Password</label>
+        <label class="reset-label" for="confirmPassword">{{ t('reset.confirmPassword') }}</label>
         <input
           id="confirmPassword"
           v-model="confirmPassword"
           type="password"
           class="reset-input"
           required
-          placeholder="Please confirm your new password"
+          :placeholder="t('reset.confirmPasswordPlaceholder')"
           @blur="validateField('confirmPassword')"
         />
         <div v-if="errors.confirmPassword" class="input-error">{{ errors.confirmPassword }}</div>
-        <button class="reset-btn" type="submit">Reset Password</button>
+        <button class="reset-btn" type="submit">{{ t('reset.submit') }}</button>
         <div class="register-tip">
-          Remembered your password?
-          <router-link to="/login">Log In</router-link>
+          {{ t('reset.remembered') }}
+          <router-link to="/login">{{ t('register.logIn') }}</router-link>
         </div>
       </form>
     </div>
@@ -46,9 +46,11 @@ import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { verifyResetToken, resetPassword } from '@/api/auth'
 import BrandLogo from '@/components/BrandLogo.vue'
+import { useI18n } from '@/i18n'
 
 const router = useRouter()
 const route = useRoute()
+const { t } = useI18n()
 const loading = ref(true)
 const tokenValid = ref(false)
 const password = ref('')
@@ -59,15 +61,15 @@ const token = ref('')
 function validateField(field: string) {
   if (field === 'password') {
     if (!password.value.trim()) {
-      errors.password = 'Password must not be blank.'
+      errors.password = t('validation.passwordRequired')
     } else if (password.value.length < 6 || password.value.length > 20) {
-      errors.password = 'Password length must be between 6 and 20 characters.'
+      errors.password = t('validation.passwordLength')
     } else {
       errors.password = ''
     }
   } else if (field === 'confirmPassword') {
     if (confirmPassword.value !== password.value) {
-      errors.confirmPassword = 'Passwords do not match.'
+      errors.confirmPassword = t('validation.passwordMismatch')
     } else {
       errors.confirmPassword = ''
     }
@@ -108,7 +110,7 @@ const handleReset = async () => {
   if (!validateAll()) return
   try {
     await resetPassword(token.value, password.value)
-    ElMessage.success('Password reset successfully! Please log in.')
+    ElMessage.success(t('reset.success'))
     setTimeout(() => {
       router.push('/auth')
     }, 1200)

@@ -1,5 +1,5 @@
 <template>
-  <img class="brand-logo" src="/brand/wristo-logo-horizontal.svg" alt="Wristo" />
+  <img class="brand-logo" src="https://cdn.wristo.io/brands/wristo-logo/svg/wristo-logo-horizontal.svg" alt="Wristo" />
 </template>
 
 <style scoped>

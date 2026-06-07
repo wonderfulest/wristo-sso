@@ -1,9 +1,9 @@
 <template>
   <div class="login-page">
     <BrandLogo class="login-logo" />
-    <h2 class="login-title">SSO Login</h2>
+    <h2 class="login-title">{{ t('auth.ssoLogin') }}</h2>
     <form class="login-form" @submit.prevent="handleLogin">
-      <label class="login-label" for="email">Email Address</label>
+      <label class="login-label" for="email">{{ t('auth.email') }}</label>
       <input
         id="email"
         v-model="email"
@@ -13,7 +13,7 @@
         required
       />
 
-      <label class="login-label" for="password">Password</label>
+      <label class="login-label" for="password">{{ t('auth.password') }}</label>
       <input
         id="password"
         v-model="password"
@@ -25,15 +25,15 @@
       <div class="login-options">
         <label class="remember-me">
           <input type="checkbox" v-model="rememberMe" />
-          <span>Remember me</span>
+          <span>{{ t('auth.rememberMe') }}</span>
         </label>
       </div>
 
       <div class="register-tip">
-        Forgot Password? <router-link to="/forgot-password">Reset here.</router-link>
+        {{ t('auth.forgotPassword') }} <router-link to="/forgot-password">{{ t('auth.resetHere') }}</router-link>
       </div>
 
-      <button class="login-btn" type="submit">Continue</button>
+      <button class="login-btn" type="submit">{{ t('auth.continue') }}</button>
     </form>
   </div>
 </template>
@@ -42,22 +42,40 @@
 import { ref, onMounted } from 'vue'
 import { useUserStore } from '@/store/user'
 import { useRoute } from 'vue-router'
-import { ssoLogin } from '@/api/auth'
+import { getSsoSession, ssoLogin } from '@/api/auth'
 import { ApiResponse } from '@/types/api'
 import BrandLogo from '@/components/BrandLogo.vue'
+import { useI18n } from '@/i18n'
 
 const email = ref('')
 const password = ref('')
 const rememberMe = ref(false)
 const userStore = useUserStore()
 const route = useRoute()
+const { t } = useI18n()
 
 const redirectUri = ref('')
+const clientId = ref('store')
 
-onMounted(() => {
+onMounted(async () => {
   // 获取 URL 查询参数中的 redirect_uri
   redirectUri.value = route.query.redirect_uri as string || ''
+  clientId.value = route.query.client as string || 'store'
   console.log('redirectUri', redirectUri.value)
+  if (!redirectUri.value) {
+    return
+  }
+  try {
+    const session = await getSsoSession()
+    if (session.code === 0 && session.data?.authenticated) {
+      const ssoRes: ApiResponse<string> = await ssoLogin(clientId.value, redirectUri.value)
+      if (ssoRes.code === 0) {
+        window.location.href = redirectUri.value + '?code=' + ssoRes.data
+      }
+    }
+  } catch (e) {
+    console.info('No active SSO session', e)
+  }
 })
 
 const handleLogin = async () => {
@@ -72,15 +90,15 @@ const handleLogin = async () => {
       if (import.meta.env.VITE_SSO_REDIRECT_URI) {
         redirectUri.value = import.meta.env.VITE_SSO_REDIRECT_URI
       } else {
-        alert('缺少 redirect_uri 参数')
+        alert(t('auth.missingRedirectUri'))
         return
       }
     }
-    const ssoRes: ApiResponse<string> = await ssoLogin(redirectUri.value, token || '')
+    const ssoRes: ApiResponse<string> = await ssoLogin(clientId.value, redirectUri.value, token || '')
     if (ssoRes.code === 0) {
       window.location.href = redirectUri.value + '?code=' + ssoRes.data
     } else {
-      alert(ssoRes.msg || '登录失败')
+      alert(ssoRes.msg || t('auth.loginFailed'))
     }
   } catch (error: any) {
     console.error('login error', error)

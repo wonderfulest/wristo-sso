@@ -1,23 +1,23 @@
 <template>
   <div class="forgot-page">
     <BrandLogo class="forgot-logo" />
-    <h2 class="forgot-title">Forgot Password</h2>
+    <h2 class="forgot-title">{{ t('forgot.title') }}</h2>
     <form class="forgot-form" @submit.prevent="handleForgot">
-      <label class="forgot-label" for="email">Email Address</label>
+      <label class="forgot-label" for="email">{{ t('auth.email') }}</label>
       <input
         id="email"
         v-model="email"
         type="email"
         class="forgot-input"
         required
-        placeholder="Please enter your registered email"
+        :placeholder="t('forgot.emailPlaceholder')"
         @blur="validateField('email')"
       />
       <div v-if="errors.email" class="input-error">{{ errors.email }}</div>
-      <button class="forgot-btn" type="submit">Send Reset Email</button>
+      <button class="forgot-btn" type="submit">{{ t('forgot.sendResetEmail') }}</button>
       <div class="register-tip">
-        Already have an account?
-        <router-link to="/login">Log In</router-link>
+        {{ t('forgot.hasAccount') }}
+        <router-link to="/login">{{ t('register.logIn') }}</router-link>
       </div>
     </form>
   </div>
@@ -29,17 +29,19 @@ import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { requestResetPassword } from '@/api/auth'
 import BrandLogo from '@/components/BrandLogo.vue'
+import { useI18n } from '@/i18n'
 
 const router = useRouter()
+const { t } = useI18n()
 const email = ref('')
 const errors = reactive({ email: '' })
 
 function validateField(field: string) {
   if (field === 'email') {
     if (!email.value.trim()) {
-      errors.email = 'Email must not be blank.'
+      errors.email = t('validation.emailRequired')
     } else if (!/^\S+@\S+\.\S+$/.test(email.value)) {
-      errors.email = 'Invalid email format.'
+      errors.email = t('validation.emailInvalid')
     } else {
       errors.email = ''
     }
@@ -55,7 +57,7 @@ const handleForgot = async () => {
   if (!validateAll()) return
   try {
     await requestResetPassword(email.value)
-    ElMessage.success('Reset email sent, please check your inbox!')
+    ElMessage.success(t('forgot.resetSent'))
     setTimeout(() => {
       router.push('/auth')
     }, 1200)

@@ -1,5 +1,6 @@
 <template>
   <div class="global-layout">
+    <LanguageSwitcher />
     <main class="main-content">
       <router-view />
     </main>
@@ -8,12 +9,12 @@
         <div class="footer-left">
           © 2025 Wristo.
           <div class="footer-links">
-            <a href="#">Terms of Use.</a>
-            <a href="#">Privacy Policy.</a>
+            <a href="#">{{ t('footer.terms') }}</a>
+            <a href="#">{{ t('footer.privacy') }}</a>
           </div>
         </div>
         <div class="footer-right">
-          Wristo is not affiliated with Garmin.
+          {{ t('footer.disclaimer') }}
         </div>
       </div>
     </footer>
@@ -21,6 +22,10 @@
 </template>
 
 <script setup lang="ts">
+import LanguageSwitcher from '@/components/LanguageSwitcher.vue'
+import { useI18n } from '@/i18n'
+
+const { t } = useI18n()
 </script>
 
 <style lang="scss" scoped>
@@ -28,11 +33,9 @@
 
 .global-layout {
   min-height: 100vh;
-  height: 100vh;
   display: flex;
   flex-direction: column;
   background: $color-bg;
-  overflow: hidden;
 }
 .header {
   background: $color-bg;
@@ -85,8 +88,7 @@
   max-width: 1200px;
   margin: 0 auto;
   width: 100%;
-  padding: 32px 0 0 0;
-  overflow: hidden;
+  padding: 20px 0 0 0;
   display: flex;
   flex-direction: column;
 }
@@ -115,9 +117,6 @@
   display: flex;
   align-items: center;
   gap: 8px;
-}
-.footer-icon {
-  font-size: $font-size-sm;
 }
 .footer-links {
   display: flex;
@@ -165,5 +164,32 @@
 }
 .user-profile-dropdown {
   position: relative;
+}
+
+@media (max-width: 600px) {
+  .main-content {
+    padding-top: 8px;
+  }
+
+  .footer {
+    padding: 12px 0;
+  }
+
+  .footer-inner,
+  .footer-left,
+  .footer-links {
+    flex-direction: column;
+  }
+
+  .footer-inner {
+    gap: 6px;
+    padding: 0 20px;
+    text-align: center;
+  }
+
+  .footer-left,
+  .footer-links {
+    gap: 4px;
+  }
 }
 </style> 

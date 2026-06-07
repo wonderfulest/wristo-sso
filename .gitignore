@@ -24,3 +24,9 @@ dist-ssr
 *.sw?
 tmp/
 package-lock.json
+
+# Local test and browser automation artifacts
+.playwright-cli/
+test-results/
+playwright-report/
+playwright/.cache/

@@ -2,13 +2,13 @@
   <div class="set-password-page">
     <BrandLogo class="set-password-logo" />
 
-    <h2 class="set-password-title">{{ isSet ? 'Set Password' : 'Change Password' }}</h2>
+    <h2 class="set-password-title">{{ isSet ? t('setPassword.setTitle') : t('setPassword.changeTitle') }}</h2>
 
     <div class="set-password-card">
       <!-- Step: Form -->
       <div v-if="!success">
         <div class="current-email-row" v-if="currentEmail">
-          <span class="current-email-label">Email</span>
+          <span class="current-email-label">{{ t('setPassword.email') }}</span>
           <span class="current-email-value">{{ currentEmail }}</span>
         </div>
 
@@ -19,17 +19,17 @@
             :disabled="!canSendCode"
             @click="handleSendCode"
           >
-            {{ sendCooldown > 0 ? `Resend code (${sendCooldown}s)` : (codeSent ? 'Resend code' : 'Send verification code') }}
+            {{ sendCodeLabel }}
           </button>
 
-          <label class="form-label" for="code">Verification code</label>
+          <label class="form-label" for="code">{{ t('auth.verificationCode') }}</label>
           <input
             id="code"
             v-model="code"
             inputmode="numeric"
             maxlength="6"
             class="form-input code-input"
-            placeholder="6-digit code"
+            :placeholder="t('auth.codePlaceholder')"
             required
             :disabled="!codeSent || loading"
             @input="onCodeInput"
@@ -37,26 +37,26 @@
           />
           <div v-if="errors.code" class="input-error">{{ errors.code }}</div>
 
-          <label class="form-label" for="newPassword">New Password</label>
+          <label class="form-label" for="newPassword">{{ t('setPassword.newPassword') }}</label>
           <input
             id="newPassword"
             v-model="newPassword"
             type="password"
             class="form-input"
-            placeholder="At least 6 characters"
+            :placeholder="t('setPassword.newPasswordPlaceholder')"
             required
             :disabled="loading"
             @blur="validateField('password')"
           />
           <div v-if="errors.password" class="input-error">{{ errors.password }}</div>
 
-          <label class="form-label" for="confirmPassword">Confirm Password</label>
+          <label class="form-label" for="confirmPassword">{{ t('setPassword.confirmPassword') }}</label>
           <input
             id="confirmPassword"
             v-model="confirmPassword"
             type="password"
             class="form-input"
-            placeholder="Re-enter your password"
+            :placeholder="t('setPassword.confirmPasswordPlaceholder')"
             required
             :disabled="loading"
             @blur="validateField('confirmPassword')"
@@ -64,7 +64,7 @@
           <div v-if="errors.confirmPassword" class="input-error">{{ errors.confirmPassword }}</div>
 
           <button class="submit-btn" type="submit" :disabled="!canSubmit">
-            {{ loading ? 'Saving...' : 'Confirm' }}
+            {{ loading ? t('changeEmail.saving') : t('changeEmail.confirm') }}
           </button>
         </form>
       </div>
@@ -72,8 +72,8 @@
       <!-- Success -->
       <div v-else class="success-block">
         <div class="success-icon">&#10003;</div>
-        <p class="success-text">Password {{ isSet ? 'set' : 'changed' }} successfully!</p>
-        <p class="success-hint">Redirecting back...</p>
+        <p class="success-text">{{ isSet ? t('setPassword.successSet') : t('setPassword.successChanged') }}</p>
+        <p class="success-hint">{{ t('changeEmail.redirecting') }}</p>
       </div>
     </div>
   </div>
@@ -85,8 +85,10 @@ import { useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { sendEmailCode, resetPasswordByCode } from '@/api/auth'
 import BrandLogo from '@/components/BrandLogo.vue'
+import { useI18n } from '@/i18n'
 
 const route = useRoute()
+const { t } = useI18n()
 
 const currentEmail = ref('')
 const code = ref('')
@@ -113,43 +115,43 @@ onMounted(() => {
   }
 
   if (!token && !localStorage.getItem('token')) {
-    ElMessage.error('Please login first')
+    ElMessage.error(t('account.loginFirst'))
   }
 })
 
 function validateField(field: 'code' | 'password' | 'confirmPassword') {
   if (field === 'code') {
     if (!code.value.trim()) {
-      errors.code = 'Code must not be blank.'
+      errors.code = t('validation.codeRequired')
       return
     }
     if (!/^\d{6}$/.test(code.value)) {
-      errors.code = 'Invalid code format.'
+      errors.code = t('validation.codeInvalid')
       return
     }
     errors.code = ''
   } else if (field === 'password') {
     if (!newPassword.value) {
-      errors.password = 'Password must not be blank.'
+      errors.password = t('validation.passwordRequired')
       return
     }
     if (newPassword.value.length < 6) {
-      errors.password = 'Password must be at least 6 characters.'
+      errors.password = t('validation.passwordMin')
       return
     }
     if (newPassword.value.length > 20) {
-      errors.password = 'Password must be no more than 20 characters.'
+      errors.password = t('validation.passwordMax')
       return
     }
     errors.password = ''
     if (confirmPassword.value && confirmPassword.value !== newPassword.value) {
-      errors.confirmPassword = 'Passwords do not match.'
+      errors.confirmPassword = t('validation.passwordMismatch')
     } else if (confirmPassword.value) {
       errors.confirmPassword = ''
     }
   } else if (field === 'confirmPassword') {
     if (confirmPassword.value !== newPassword.value) {
-      errors.confirmPassword = 'Passwords do not match.'
+      errors.confirmPassword = t('validation.passwordMismatch')
     } else {
       errors.confirmPassword = ''
     }
@@ -167,6 +169,13 @@ const canSubmit = computed(() => {
     !errors.code && !errors.password && !errors.confirmPassword
 })
 
+const sendCodeLabel = computed(() => {
+  if (sendCooldown.value > 0) {
+    return t('auth.resendCodeSeconds', { seconds: sendCooldown.value })
+  }
+  return codeSent.value ? t('auth.resendCode') : t('setPassword.sendVerificationCode')
+})
+
 function startCooldown() {
   sendCooldown.value = 60
   const timer = setInterval(() => {
@@ -181,7 +190,7 @@ function onCodeInput() {
 
 async function handleSendCode() {
   if (!currentEmail.value) {
-    ElMessage.error('Email not available')
+    ElMessage.error(t('setPassword.emailNotAvailable'))
     return
   }
 
@@ -190,7 +199,7 @@ async function handleSendCode() {
     await sendEmailCode({ email: currentEmail.value.trim() })
     codeSent.value = true
     startCooldown()
-    ElMessage.success('Verification code sent!')
+    ElMessage.success(t('changeEmail.codeSent'))
   } catch (e: any) {
     console.error('send code error', e)
   } finally {
@@ -212,7 +221,7 @@ async function handleSubmit() {
       newPassword: newPassword.value
     })
     success.value = true
-    ElMessage.success(`Password ${isSet.value ? 'set' : 'changed'} successfully!`)
+    ElMessage.success(isSet.value ? t('setPassword.successSet') : t('setPassword.successChanged'))
 
     setTimeout(() => {
       if (redirectUri.value) {
