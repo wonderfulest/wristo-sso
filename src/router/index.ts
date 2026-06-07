@@ -40,10 +40,10 @@ const localizedRoutes: RouteRecordRaw[] = baseRoutes
     path: `/:lang(${langPattern})${route.path}`,
     name: route.name ? `${String(route.name)}Lang` : undefined,
     redirect: typeof route.redirect === 'function'
-      ? (to: any) => {
+      ? (to: any, from: any) => {
           const redirect = route.redirect
           if (typeof redirect !== 'function') return undefined
-          const result = redirect(to)
+          const result = (redirect as (...args: any[]) => any)(to, from)
           if (typeof result === 'string') return `/${to.params.lang}${result}`
           if (result && typeof result === 'object' && 'path' in result) {
             return { ...result, path: `/${to.params.lang}${result.path}` }
