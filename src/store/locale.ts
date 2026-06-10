@@ -59,7 +59,7 @@ function setCookieLocale(locale: SupportedLocale) {
   document.cookie = `${SHARED_LOCALE_KEY}=${encodeURIComponent(locale)}; Path=/; Max-Age=${maxAge}; SameSite=Lax${secure}`
 }
 
-function getStoredLocale(): SupportedLocale {
+export function getStoredLocale(): SupportedLocale {
   if (typeof localStorage === 'undefined') return DEFAULT_LOCALE
   const local = readLocaleValue(localStorage.getItem(SHARED_LOCALE_KEY))
   if (local) return local

@@ -1,5 +1,5 @@
 import { computed } from 'vue'
-import { useLocaleStore, type SupportedLocale } from '@/store/locale'
+import { getStoredLocale, useLocaleStore, type SupportedLocale } from '@/store/locale'
 
 const en = {
   'language.selector': 'Language selector',
@@ -33,6 +33,9 @@ const en = {
   'auth.resetHere': 'Reset here.',
   'auth.missingRedirectUri': 'Missing redirect_uri parameter',
   'auth.loginFailed': 'Login failed',
+  'error.requestFailed': 'Request failed',
+  'error.sessionExpired': 'Your login has expired. Please sign in again.',
+  'error.network': 'Network error. Please try again later.',
   'validation.emailRequired': 'Email must not be blank.',
   'validation.emailInvalid': 'Invalid email format.',
   'validation.codeRequired': 'Code must not be blank.',
@@ -132,6 +135,9 @@ const messages: Record<SupportedLocale, Messages> = {
     'auth.resetHere': '在这里重置。',
     'auth.missingRedirectUri': '缺少 redirect_uri 参数',
     'auth.loginFailed': '登录失败',
+    'error.requestFailed': '请求失败',
+    'error.sessionExpired': '登录已过期，请重新登录',
+    'error.network': '网络错误，请稍后重试',
     'validation.emailRequired': '邮箱不能为空。',
     'validation.emailInvalid': '邮箱格式无效。',
     'validation.codeRequired': '验证码不能为空。',
@@ -225,6 +231,9 @@ const messages: Record<SupportedLocale, Messages> = {
     'auth.resetHere': 'Hier zurucksetzen.',
     'auth.missingRedirectUri': 'Parameter redirect_uri fehlt',
     'auth.loginFailed': 'Anmeldung fehlgeschlagen',
+    'error.requestFailed': 'Anfrage fehlgeschlagen',
+    'error.sessionExpired': 'Deine Anmeldung ist abgelaufen. Bitte melde dich erneut an.',
+    'error.network': 'Netzwerkfehler. Bitte versuche es spater erneut.',
     'validation.emailRequired': 'E-Mail darf nicht leer sein.',
     'validation.emailInvalid': 'Ungultiges E-Mail-Format.',
     'validation.codeRequired': 'Code darf nicht leer sein.',
@@ -290,6 +299,9 @@ const messages: Record<SupportedLocale, Messages> = {
     'auth.resetHere': 'Restablecer aqui.',
     'auth.missingRedirectUri': 'Falta el parametro redirect_uri',
     'auth.loginFailed': 'Error al iniciar sesion',
+    'error.requestFailed': 'Error en la solicitud',
+    'error.sessionExpired': 'Tu sesion ha expirado. Inicia sesion de nuevo.',
+    'error.network': 'Error de red. Intentalo de nuevo mas tarde.',
     'validation.emailRequired': 'El correo no puede estar vacio.',
     'validation.emailInvalid': 'Formato de correo invalido.',
     'validation.codeRequired': 'El codigo no puede estar vacio.',
@@ -355,6 +367,9 @@ const messages: Record<SupportedLocale, Messages> = {
     'auth.resetHere': 'Reinitialiser ici.',
     'auth.missingRedirectUri': 'Parametre redirect_uri manquant',
     'auth.loginFailed': 'Echec de la connexion',
+    'error.requestFailed': 'Echec de la requete',
+    'error.sessionExpired': 'Votre session a expire. Veuillez vous reconnecter.',
+    'error.network': 'Erreur reseau. Veuillez reessayer plus tard.',
     'validation.emailRequired': 'L’e-mail ne doit pas etre vide.',
     'validation.emailInvalid': 'Format d’e-mail invalide.',
     'validation.codeRequired': 'Le code ne doit pas etre vide.',
@@ -420,6 +435,9 @@ const messages: Record<SupportedLocale, Messages> = {
     'auth.resetHere': 'Reimposta qui.',
     'auth.missingRedirectUri': 'Parametro redirect_uri mancante',
     'auth.loginFailed': 'Accesso non riuscito',
+    'error.requestFailed': 'Richiesta non riuscita',
+    'error.sessionExpired': 'La sessione e scaduta. Accedi di nuovo.',
+    'error.network': 'Errore di rete. Riprova piu tardi.',
     'validation.emailRequired': 'L’email non puo essere vuota.',
     'validation.emailInvalid': 'Formato email non valido.',
     'validation.codeRequired': 'Il codice non puo essere vuoto.',
@@ -461,14 +479,24 @@ function formatMessage(template: string, params?: Record<string, string | number
   }, template)
 }
 
+export function translateMessage(key: MessageKey, params?: Record<string, string | number>) {
+  const locale = getStoredLocale()
+  const value = messages[locale]?.[key] || messages.en[key] || key
+  return formatMessage(value, params)
+}
+
 export function useI18n() {
   const localeStore = useLocaleStore()
   const locale = computed(() => localeStore.currentLocale)
 
   function t(key: MessageKey, params?: Record<string, string | number>) {
-    const value = messages[locale.value]?.[key] || messages.en[key] || key
-    return formatMessage(value, params)
+    return translateMessageForLocale(locale.value, key, params)
   }
 
   return { locale, t }
+}
+
+function translateMessageForLocale(locale: SupportedLocale, key: MessageKey, params?: Record<string, string | number>) {
+  const value = messages[locale]?.[key] || messages.en[key] || key
+  return formatMessage(value, params)
 }

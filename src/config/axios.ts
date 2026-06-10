@@ -3,6 +3,7 @@ import { ElMessage } from 'element-plus'
 import { BizErrorCode } from '@/constant/errorCode'
 import type { ApiResponse } from '@/types/api'
 import { redirectToAuthPage } from '@/utils/authRedirect'
+import { translateMessage } from '@/i18n'
 
 const instance = axios.create({
   baseURL: '/api', // 走 vite 代理
@@ -29,17 +30,17 @@ instance.interceptors.response.use(
     if (res.code === BizErrorCode.SUCCESS) {
       return response.data // 返回原始 response
     } else {
-      ElMessage.error(response.data.msg || '请求失败')
+      ElMessage.error(response.data.msg || translateMessage('error.requestFailed'))
       return Promise.reject(response.data)
     }
   },
   error => {
     const status = error.response?.status
     if (status === 401 || status === 403) {
-      ElMessage.error('登录已过期，请重新登录')
+      ElMessage.error(translateMessage('error.sessionExpired'))
       redirectToAuthPage()
     } else {
-      ElMessage.error('网络错误，请稍后重试')
+      ElMessage.error(translateMessage('error.network'))
     }
     return Promise.reject(error)
   }
