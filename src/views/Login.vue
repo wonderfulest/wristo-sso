@@ -87,8 +87,8 @@ const handleLogin = async () => {
     // 登录成功后，调用 SSO 下发 code 接口
     const token = loginRes?.token || localStorage.getItem('token')
     if (!redirectUri.value) {
-      if (import.meta.env.VITE_SSO_REDIRECT_URI) {
-        redirectUri.value = import.meta.env.VITE_SSO_REDIRECT_URI
+      if (import.meta.env.VITE_WRISTO_SSO_REDIRECT_URI) {
+        redirectUri.value = import.meta.env.VITE_WRISTO_SSO_REDIRECT_URI
       } else {
         alert(t('auth.missingRedirectUri'))
         return

@@ -133,7 +133,7 @@ const clientId = computed(() => (route.query.client as string) || 'store')
 
 const errors = reactive({ email: '', code: '' })
 
-const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || ''
+const googleClientId = import.meta.env.VITE_WRISTO_GOOGLE_CLIENT_ID || ''
 
 const clientLabel = computed(() => {
   const client = (route.query.client as string) || ''
@@ -255,7 +255,7 @@ async function handleVerify() {
 async function handleSsoRedirect(token: string) {
   let target = redirectUri.value
   if (!target) {
-    target = import.meta.env.VITE_SSO_REDIRECT_URI || ''
+    target = import.meta.env.VITE_WRISTO_SSO_REDIRECT_URI || ''
   }
   if (!target) {
     ElMessage.success(t('auth.authenticated'))
