@@ -10,7 +10,8 @@ export default defineConfig(({ mode }) => {
   return {
     envDir,
     define: {
-      'import.meta.env.VITE_WRISTO_SSO_REDIRECT_URI': JSON.stringify(env.VITE_WRISTO_SSO_REDIRECT_URI || ''),
+      'import.meta.env.VITE_WRISTO_DEFAULT_SSO_REDIRECT_URI': JSON.stringify(env.VITE_WRISTO_DEFAULT_SSO_REDIRECT_URI || ''),
+      'import.meta.env.VITE_WRISTO_GOOGLE_OAUTH_REDIRECT_URI': JSON.stringify(env.VITE_WRISTO_GOOGLE_OAUTH_REDIRECT_URI || ''),
       'import.meta.env.VITE_WRISTO_GOOGLE_CLIENT_ID': JSON.stringify(env.VITE_WRISTO_GOOGLE_CLIENT_ID || ''),
     },
     plugins: [

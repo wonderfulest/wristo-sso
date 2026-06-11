@@ -134,6 +134,7 @@ const clientId = computed(() => (route.query.client as string) || 'store')
 const errors = reactive({ email: '', code: '' })
 
 const googleClientId = import.meta.env.VITE_WRISTO_GOOGLE_CLIENT_ID || ''
+const googleOAuthRedirectUri = import.meta.env.VITE_WRISTO_GOOGLE_OAUTH_REDIRECT_URI || window.location.origin
 
 const clientLabel = computed(() => {
   const client = (route.query.client as string) || ''
@@ -255,7 +256,7 @@ async function handleVerify() {
 async function handleSsoRedirect(token: string) {
   let target = redirectUri.value
   if (!target) {
-    target = import.meta.env.VITE_WRISTO_SSO_REDIRECT_URI || ''
+    target = import.meta.env.VITE_WRISTO_DEFAULT_SSO_REDIRECT_URI || ''
   }
   if (!target) {
     ElMessage.success(t('auth.authenticated'))
@@ -306,7 +307,7 @@ const handleGoogleLogin = () => {
 
   const onGoogleCodeSuccess = async (code: string) => {
     try {
-      const loginVO = await userStore.loginWithGoogleCode(code, window.location.origin)
+      const loginVO = await userStore.loginWithGoogleCode(code, googleOAuthRedirectUri)
       const token = loginVO?.token || localStorage.getItem('token') || ''
       await handleSsoRedirect(token)
     } catch (e: any) {
