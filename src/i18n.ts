@@ -33,9 +33,22 @@ const en = {
   'auth.resetHere': 'Reset here.',
   'auth.missingRedirectUri': 'Missing redirect_uri parameter',
   'auth.loginFailed': 'Login failed',
+  'auth.registrationDisabled': 'Registration is disabled in this application.',
   'error.requestFailed': 'Request failed',
   'error.sessionExpired': 'Your login has expired. Please sign in again.',
   'error.network': 'Network error. Please try again later.',
+  'error.system': 'System error. Please try again later.',
+  'error.param': 'Invalid request. Please check your input.',
+  'error.notFound': 'The requested resource was not found.',
+  'error.forbidden': 'You do not have permission to perform this action.',
+  'error.invalidCredentials': 'Incorrect email or password.',
+  'error.invalidCode': 'The verification code is incorrect.',
+  'error.codeExpired': 'The verification code has expired. Please request a new one.',
+  'error.codeTooFrequent': 'Verification codes are being requested too frequently. Please try again later.',
+  'error.emailExists': 'This email is already registered.',
+  'error.emailNotFound': 'No account was found for this email.',
+  'error.userNotFound': 'User not found.',
+  'error.tokenInvalid': 'The login credential is invalid or expired.',
   'validation.emailRequired': 'Email must not be blank.',
   'validation.emailInvalid': 'Invalid email format.',
   'validation.codeRequired': 'Code must not be blank.',
@@ -100,6 +113,96 @@ const en = {
 type MessageKey = keyof typeof en
 type Messages = Record<MessageKey, string>
 
+const apiMessageRules: Array<{ key: MessageKey; patterns: RegExp[] }> = [
+  {
+    key: 'auth.registrationDisabled',
+    patterns: [
+      /registration.*disabled/i,
+      /未开放注册|注册.*关闭|注册.*禁用/
+    ]
+  },
+  {
+    key: 'error.invalidCredentials',
+    patterns: [
+      /invalid\s+(email|username|account|credentials|password)/i,
+      /(incorrect|wrong)\s+(email|username|account|password|credentials)/i,
+      /邮箱或密码|账号或密码|用户名或密码|密码错误|密码不正确|登录失败/
+    ]
+  },
+  {
+    key: 'error.invalidCode',
+    patterns: [
+      /invalid\s+(verification\s+)?code/i,
+      /(incorrect|wrong)\s+(verification\s+)?code/i,
+      /验证码.*(错误|不正确|无效)|无效.*验证码/
+    ]
+  },
+  {
+    key: 'error.codeExpired',
+    patterns: [
+      /(verification\s+)?code\s+(expired|has expired)/i,
+      /验证码.*(过期|失效)/
+    ]
+  },
+  {
+    key: 'error.codeTooFrequent',
+    patterns: [
+      /(too many|frequent).*(code|request)/i,
+      /验证码.*(频繁|过于频繁)|请求.*频繁/
+    ]
+  },
+  {
+    key: 'error.emailExists',
+    patterns: [
+      /email.*(exists|already registered|already in use)/i,
+      /邮箱.*(已存在|已注册|被占用)/
+    ]
+  },
+  {
+    key: 'error.emailNotFound',
+    patterns: [
+      /email.*(not found|not exist|does not exist)/i,
+      /邮箱.*(不存在|未找到)/
+    ]
+  },
+  {
+    key: 'error.userNotFound',
+    patterns: [
+      /user.*(not found|not exist|does not exist)/i,
+      /用户.*(不存在|未找到)/
+    ]
+  },
+  {
+    key: 'error.tokenInvalid',
+    patterns: [
+      /(token|credential).*(invalid|expired)/i,
+      /(invalid|expired).*(token|credential)/i,
+      /(令牌|凭证|token).*(无效|过期|失效)/
+    ]
+  },
+  {
+    key: 'error.forbidden',
+    patterns: [
+      /forbidden|permission denied|unauthorized/i,
+      /无权限|未授权|禁止访问/
+    ]
+  },
+  {
+    key: 'error.param',
+    patterns: [
+      /param|parameter|invalid request|bad request/i,
+      /参数.*(错误|无效)|请求.*无效/
+    ]
+  },
+  {
+    key: 'error.system',
+    patterns: [
+      /system error|server error|internal error/i,
+      /系统错误|服务器错误|内部错误/
+    ]
+  }
+]
+
 const messages: Record<SupportedLocale, Messages> = {
   en,
   zh: {
@@ -135,9 +238,22 @@ const messages: Record<SupportedLocale, Messages> = {
     'auth.resetHere': '在这里重置。',
     'auth.missingRedirectUri': '缺少 redirect_uri 参数',
     'auth.loginFailed': '登录失败',
+    'auth.registrationDisabled': '当前应用未开放注册。',
     'error.requestFailed': '请求失败',
     'error.sessionExpired': '登录已过期，请重新登录',
     'error.network': '网络错误，请稍后重试',
+    'error.system': '系统错误，请稍后重试',
+    'error.param': '请求参数无效，请检查输入内容',
+    'error.notFound': '请求的资源不存在',
+    'error.forbidden': '无权限执行此操作',
+    'error.invalidCredentials': '邮箱或密码不正确',
+    'error.invalidCode': '验证码不正确',
+    'error.codeExpired': '验证码已过期，请重新获取',
+    'error.codeTooFrequent': '验证码请求过于频繁，请稍后再试',
+    'error.emailExists': '该邮箱已注册',
+    'error.emailNotFound': '未找到该邮箱对应的账户',
+    'error.userNotFound': '用户不存在',
+    'error.tokenInvalid': '登录凭证无效或已过期',
     'validation.emailRequired': '邮箱不能为空。',
     'validation.emailInvalid': '邮箱格式无效。',
     'validation.codeRequired': '验证码不能为空。',
@@ -483,6 +599,17 @@ export function translateMessage(key: MessageKey, params?: Record<string, string
   const locale = getStoredLocale()
   const value = messages[locale]?.[key] || messages.en[key] || key
   return formatMessage(value, params)
+}
+
+export function translateApiMessage(message: unknown, fallbackKey: MessageKey = 'error.requestFailed') {
+  const text = typeof message === 'string' ? message.trim() : ''
+  if (text) {
+    const rule = apiMessageRules.find(({ patterns }) => patterns.some(pattern => pattern.test(text)))
+    if (rule) {
+      return translateMessage(rule.key)
+    }
+  }
+  return translateMessage(fallbackKey)
 }
 
 export function useI18n() {

@@ -3,7 +3,7 @@ import { ElMessage } from 'element-plus'
 import { BizErrorCode } from '@/constant/errorCode'
 import type { ApiResponse } from '@/types/api'
 import { redirectToAuthPage } from '@/utils/authRedirect'
-import { translateMessage } from '@/i18n'
+import { translateApiMessage, translateMessage } from '@/i18n'
 
 const instance = axios.create({
   baseURL: '/api', // 走 vite 代理
@@ -30,7 +30,7 @@ instance.interceptors.response.use(
     if (res.code === BizErrorCode.SUCCESS) {
       return response.data // 返回原始 response
     } else {
-      ElMessage.error(response.data.msg || translateMessage('error.requestFailed'))
+      ElMessage.error(translateApiMessage(response.data.msg))
       return Promise.reject(response.data)
     }
   },

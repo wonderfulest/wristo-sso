@@ -66,7 +66,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { useUserStore } from '@/store/user'
 import { ElMessage } from 'element-plus'
 import BrandLogo from '@/components/BrandLogo.vue'
-import { useI18n } from '@/i18n'
+import { translateApiMessage, useI18n } from '@/i18n'
 
 const router = useRouter()
 const route = useRoute()
@@ -156,7 +156,7 @@ const handleRegister = async () => {
       router.push({ path: '/login', query: route.query })
     }, 1200)
   } catch (error: any) {
-    alert(error.msg || t('register.failed'))
+    ElMessage.error(translateApiMessage(error?.msg || error?.message, 'register.failed'))
   }
 }
 </script>

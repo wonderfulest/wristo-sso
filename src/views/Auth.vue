@@ -109,7 +109,7 @@ import { useRoute } from 'vue-router'
 import { getSsoSession, sendEmailCode, ssoLogin } from '@/api/auth'
 import { useUserStore } from '@/store/user'
 import BrandLogo from '@/components/BrandLogo.vue'
-import { useI18n } from '@/i18n'
+import { translateApiMessage, useI18n } from '@/i18n'
 
 declare const google: any
 
@@ -267,10 +267,11 @@ async function handleSsoRedirect(token: string) {
     if (ssoRes.code === 0) {
       window.location.href = target + '?code=' + ssoRes.data
     } else {
-      ElMessage.error(ssoRes.msg || t('auth.ssoRedirectFailed'))
+      ElMessage.error(translateApiMessage(ssoRes.msg, 'auth.ssoRedirectFailed'))
     }
   } catch (e: any) {
     console.error('SSO redirect failed:', e.msg)
+    ElMessage.error(translateApiMessage(e?.msg, 'auth.ssoRedirectFailed'))
   }
 }
 

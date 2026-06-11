@@ -42,10 +42,11 @@
 import { ref, onMounted } from 'vue'
 import { useUserStore } from '@/store/user'
 import { useRoute } from 'vue-router'
+import { ElMessage } from 'element-plus'
 import { getSsoSession, ssoLogin } from '@/api/auth'
 import { ApiResponse } from '@/types/api'
 import BrandLogo from '@/components/BrandLogo.vue'
-import { useI18n } from '@/i18n'
+import { translateApiMessage, useI18n } from '@/i18n'
 
 const email = ref('')
 const password = ref('')
@@ -90,7 +91,7 @@ const handleLogin = async () => {
       if (import.meta.env.VITE_WRISTO_DEFAULT_SSO_REDIRECT_URI) {
         redirectUri.value = import.meta.env.VITE_WRISTO_DEFAULT_SSO_REDIRECT_URI
       } else {
-        alert(t('auth.missingRedirectUri'))
+        ElMessage.error(t('auth.missingRedirectUri'))
         return
       }
     }
@@ -98,7 +99,7 @@ const handleLogin = async () => {
     if (ssoRes.code === 0) {
       window.location.href = redirectUri.value + '?code=' + ssoRes.data
     } else {
-      alert(ssoRes.msg || t('auth.loginFailed'))
+      ElMessage.error(translateApiMessage(ssoRes.msg, 'auth.loginFailed'))
     }
   } catch (error: any) {
     console.error('login error', error)
