@@ -110,6 +110,7 @@ import { getSsoSession, sendEmailCode, ssoLogin } from '@/api/auth'
 import { useUserStore } from '@/store/user'
 import BrandLogo from '@/components/BrandLogo.vue'
 import { translateApiMessage, useI18n } from '@/i18n'
+import { resolveSsoClientId } from '@/utils/ssoClient'
 
 declare const google: any
 
@@ -129,7 +130,7 @@ const codeState = ref<CodeState>('idle')
 const sendCooldown = ref(0)
 
 const redirectUri = ref('')
-const clientId = computed(() => (route.query.client as string) || 'store')
+const clientId = computed(() => resolveSsoClientId(route.query.client, redirectUri.value))
 
 const errors = reactive({ email: '', code: '' })
 
@@ -137,7 +138,7 @@ const googleClientId = import.meta.env.VITE_WRISTO_GOOGLE_CLIENT_ID || ''
 const googleOAuthRedirectUri = import.meta.env.VITE_WRISTO_GOOGLE_OAUTH_REDIRECT_URI || window.location.origin
 
 const clientLabel = computed(() => {
-  const client = (route.query.client as string) || ''
+  const client = clientId.value
   if (client === 'studio') return 'Wristo Studio'
   if (client === 'store') return 'Wristo Store'
   if (client === 'merchant') return 'Wristo Merchant'

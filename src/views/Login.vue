@@ -47,6 +47,7 @@ import { getSsoSession, ssoLogin } from '@/api/auth'
 import { ApiResponse } from '@/types/api'
 import BrandLogo from '@/components/BrandLogo.vue'
 import { translateApiMessage, useI18n } from '@/i18n'
+import { resolveSsoClientId } from '@/utils/ssoClient'
 
 const email = ref('')
 const password = ref('')
@@ -61,7 +62,7 @@ const clientId = ref('store')
 onMounted(async () => {
   // 获取 URL 查询参数中的 redirect_uri
   redirectUri.value = route.query.redirect_uri as string || ''
-  clientId.value = route.query.client as string || 'store'
+  clientId.value = resolveSsoClientId(route.query.client, redirectUri.value)
   console.log('redirectUri', redirectUri.value)
   if (!redirectUri.value) {
     return
