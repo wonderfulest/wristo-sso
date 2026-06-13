@@ -144,7 +144,23 @@ const clientId = computed(() => resolveSsoClientId(route.query.client, redirectU
 const errors = reactive({ email: '', code: '' })
 
 const googleClientId = import.meta.env.VITE_WRISTO_GOOGLE_CLIENT_ID || ''
-const googleOAuthRedirectUri = import.meta.env.VITE_WRISTO_GOOGLE_OAUTH_REDIRECT_URI || window.location.origin
+const googleOAuthRedirectUri = resolveGoogleOAuthRedirectUri(import.meta.env.VITE_WRISTO_GOOGLE_OAUTH_REDIRECT_URI)
+
+function resolveGoogleOAuthRedirectUri(configuredRedirectUri?: string) {
+  const fallback = window.location.origin
+  const configured = configuredRedirectUri?.trim()
+  if (!configured) return fallback
+
+  try {
+    const url = new URL(configured, fallback)
+    if (url.pathname.replace(/\/$/, '') === '/api/auth/google/callback') {
+      return fallback
+    }
+    return url.toString().replace(/\/$/, '')
+  } catch {
+    return fallback
+  }
+}
 
 const clientLabel = computed(() => {
   const client = clientId.value
