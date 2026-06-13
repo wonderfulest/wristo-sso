@@ -20,8 +20,12 @@
         <span class="divider-text">{{ t('auth.or') }}</span>
       </div>
 
-      <!-- Password login (default) -->
       <form v-if="loginMode === 'password'" class="auth-form" @submit.prevent="handlePasswordLogin">
+        <div class="method-copy">
+          <h2>{{ t('auth.passwordLoginTitle') }}</h2>
+          <p>{{ t('auth.passwordLoginHint') }}</p>
+        </div>
+
         <label class="auth-label" for="email">{{ t('auth.email') }}</label>
         <input
           id="email"
@@ -57,6 +61,11 @@
 
       <!-- Email code login -->
       <form v-else class="auth-form" @submit.prevent="handleVerify">
+        <div class="method-copy">
+          <h2>{{ t('auth.emailLoginTitle') }}</h2>
+          <p>{{ t('auth.emailLoginHint') }}</p>
+        </div>
+
         <label class="auth-label" for="email2">{{ t('auth.email') }}</label>
         <input
           id="email2"
@@ -84,12 +93,12 @@
             class="auth-input code-input"
             :placeholder="t('auth.codePlaceholder')"
             required
-            :disabled="codeState !== 'code_sent' && !loading"
+            :disabled="loading"
             @input="onCodeInput"
             @blur="validateField('code')"
           />
           <button class="verify-btn" type="submit" :disabled="!canVerify">
-            {{ loading ? t('auth.verifying') : t('auth.verify') }}
+            {{ loading ? t('auth.verifying') : t('auth.continue') }}
           </button>
         </div>
         <div v-if="errors.code" class="input-error">{{ errors.code }}</div>
@@ -121,7 +130,7 @@ const route = useRoute()
 const userStore = useUserStore()
 const { t } = useI18n()
 
-const loginMode = ref<LoginMode>('password')
+const loginMode = ref<LoginMode>('code')
 const email = ref('')
 const password = ref('')
 const code = ref('')
@@ -202,14 +211,14 @@ const canSendCode = computed(() => {
 })
 
 const canVerify = computed(() => {
-  return codeState.value === 'code_sent' && !loading.value && !errors.email && !errors.code && /^\d{6}$/.test(code.value)
+  return !loading.value && !errors.email && !errors.code && /^\S+@\S+\.\S+$/.test(email.value) && /^\d{6}$/.test(code.value)
 })
 
 const sendCodeLabel = computed(() => {
   if (sendCooldown.value > 0) {
     return t('auth.resendCodeSeconds', { seconds: sendCooldown.value })
   }
-  return codeState.value === 'code_sent' ? t('auth.resendCode') : t('auth.sendCode')
+  return codeState.value === 'code_sent' ? t('auth.resendEmailCode') : t('auth.sendEmailCode')
 })
 
 function startCooldown() {
@@ -471,6 +480,26 @@ html, body {
   display: flex;
   flex-direction: column;
   gap: 10px;
+}
+
+.method-copy {
+  margin-bottom: 2px;
+  text-align: left;
+}
+
+.method-copy h2 {
+  color: #17201d;
+  font-size: 1.08rem;
+  font-weight: 800;
+  line-height: 1.25;
+  margin: 0;
+}
+
+.method-copy p {
+  color: #596460;
+  font-size: 0.92rem;
+  line-height: 1.45;
+  margin: 6px 0 2px;
 }
 
 .auth-label {
