@@ -7,7 +7,7 @@
     <footer class="footer">
       <div class="footer-inner">
         <div class="footer-left">
-          © 2025 Wristo.
+          © Wristo 2026.
           <div class="footer-links">
             <a href="#">{{ t('footer.terms') }}</a>
             <a href="#">{{ t('footer.privacy') }}</a>
