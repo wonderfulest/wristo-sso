@@ -125,12 +125,13 @@ declare const google: any
 
 type LoginMode = 'password' | 'code'
 type CodeState = 'idle' | 'code_sent'
+const LOGIN_MODE_STORAGE_KEY = 'wristo:sso-login-mode'
 
 const route = useRoute()
 const userStore = useUserStore()
 const { t } = useI18n()
 
-const loginMode = ref<LoginMode>('code')
+const loginMode = ref<LoginMode>(readStoredLoginMode())
 const email = ref('')
 const password = ref('')
 const code = ref('')
@@ -189,8 +190,26 @@ onMounted(async () => {
 
 function switchMode(mode: LoginMode) {
   loginMode.value = mode
+  saveLoginMode(mode)
   errors.email = ''
   errors.code = ''
+}
+
+function readStoredLoginMode(): LoginMode {
+  try {
+    const storedMode = localStorage.getItem(LOGIN_MODE_STORAGE_KEY)
+    return storedMode === 'password' || storedMode === 'code' ? storedMode : 'code'
+  } catch {
+    return 'code'
+  }
+}
+
+function saveLoginMode(mode: LoginMode) {
+  try {
+    localStorage.setItem(LOGIN_MODE_STORAGE_KEY, mode)
+  } catch {
+    // Ignore storage failures and keep the selected mode for the current session.
+  }
 }
 
 function validateField(field: 'email' | 'code') {
