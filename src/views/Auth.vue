@@ -178,6 +178,11 @@ onMounted(async () => {
     return
   }
 
+  if (route.query.force_login === '1') {
+    await userStore.logout()
+    return
+  }
+
   try {
     const session = await getSsoSession()
     if (session.code === 0 && session.data?.authenticated) {
