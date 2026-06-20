@@ -39,7 +39,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import { useUserStore } from '@/store/user'
 import { useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
@@ -58,6 +58,20 @@ const { t } = useI18n()
 
 const redirectUri = ref('')
 const clientId = ref('store')
+const nextPath = computed(() => {
+  const raw = route.query.next
+  const value = Array.isArray(raw) ? raw[0] : raw
+  return typeof value === 'string' && value.startsWith('/') ? value : ''
+})
+
+const redirectWithCode = (target: string, code: string) => {
+  const callbackUrl = new URL(target, window.location.origin)
+  callbackUrl.searchParams.set('code', code)
+  if (nextPath.value) {
+    callbackUrl.searchParams.set('next', nextPath.value)
+  }
+  window.location.href = callbackUrl.toString()
+}
 
 onMounted(async () => {
   // 获取 URL 查询参数中的 redirect_uri
@@ -75,8 +89,8 @@ onMounted(async () => {
     const session = await getSsoSession()
     if (session.code === 0 && session.data?.authenticated) {
       const ssoRes: ApiResponse<string> = await ssoLogin(clientId.value, redirectUri.value)
-      if (ssoRes.code === 0) {
-        window.location.href = redirectUri.value + '?code=' + ssoRes.data
+      if (ssoRes.code === 0 && ssoRes.data) {
+        redirectWithCode(redirectUri.value, ssoRes.data)
       }
     }
   } catch (e) {
@@ -101,8 +115,8 @@ const handleLogin = async () => {
       }
     }
     const ssoRes: ApiResponse<string> = await ssoLogin(clientId.value, redirectUri.value, token || '')
-    if (ssoRes.code === 0) {
-      window.location.href = redirectUri.value + '?code=' + ssoRes.data
+    if (ssoRes.code === 0 && ssoRes.data) {
+      redirectWithCode(redirectUri.value, ssoRes.data)
     } else {
       ElMessage.error(translateApiMessage(ssoRes.msg, 'auth.loginFailed'))
     }

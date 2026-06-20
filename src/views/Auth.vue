@@ -141,6 +141,11 @@ const sendCooldown = ref(0)
 
 const redirectUri = ref('')
 const clientId = computed(() => resolveSsoClientId(route.query.client, redirectUri.value))
+const nextPath = computed(() => {
+  const raw = route.query.next
+  const value = Array.isArray(raw) ? raw[0] : raw
+  return typeof value === 'string' && value.startsWith('/') ? value : ''
+})
 
 const errors = reactive({ email: '', code: '' })
 
@@ -314,8 +319,13 @@ async function handleSsoRedirect(token: string) {
   }
   try {
     const ssoRes = await ssoLogin(clientId.value, target, token || undefined)
-    if (ssoRes.code === 0) {
-      window.location.href = target + '?code=' + ssoRes.data
+    if (ssoRes.code === 0 && ssoRes.data) {
+      const callbackUrl = new URL(target, window.location.origin)
+      callbackUrl.searchParams.set('code', ssoRes.data)
+      if (nextPath.value) {
+        callbackUrl.searchParams.set('next', nextPath.value)
+      }
+      window.location.href = callbackUrl.toString()
     } else {
       ElMessage.error(translateApiMessage(ssoRes.msg, 'auth.ssoRedirectFailed'))
     }
