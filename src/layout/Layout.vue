@@ -5,18 +5,16 @@
       <router-view />
     </main>
     <footer class="footer">
-      <div class="footer-inner">
-        <div class="footer-left">
-          <span class="footer-brand">
-            <img class="footer-mark" src="https://cdn.wristo.io/brands/wristo-logo/svg/wristo-mark.svg" alt="" aria-hidden="true" />
-            © Wristo 2026
-          </span>
-          <div class="footer-links">
-            <a href="#">{{ t('footer.terms') }}</a>
-            <a href="#">{{ t('footer.privacy') }}</a>
-          </div>
+      <div class="footer-main desktop-layout">
+        <div class="footer-brand">
+          <img class="footer-mark" src="https://cdn.wristo.io/brands/wristo-logo/svg/wristo-mark.svg" alt="" aria-hidden="true" />
+          <span>© Wristo 2026</span>
         </div>
-        <div class="footer-right">
+        <nav class="footer-nav" aria-label="Footer links">
+          <a href="#">{{ t('footer.terms') }}</a>
+          <a href="#">{{ t('footer.privacy') }}</a>
+        </nav>
+        <div class="footer-note">
           {{ t('footer.disclaimer') }}
         </div>
       </div>
@@ -96,74 +94,82 @@ const { t } = useI18n()
   flex-direction: column;
 }
 .footer {
+  color: $color-footer-text;
+  font-size: 0.95rem;
   flex-shrink: 0;
-  background: rgba(255, 255, 255, 0.92);
+  background: rgba(255, 255, 255, 0.94);
   border-top: 1px solid rgba(17, 24, 39, 0.08);
   box-shadow: 0 -1px 0 rgba(255, 255, 255, 0.8);
-  padding: 14px 0;
+  padding: 14px 16px;
   padding-bottom: max(14px, env(safe-area-inset-bottom));
   width: 100%;
-  font-size: $font-size-xs;
   position: relative;
   bottom: 0;
   left: 0;
   margin-top: auto;
+  text-align: center;
+  outline: none;
+  transition: background 0.25s ease, border-color 0.25s ease, transform 0.3s ease;
+  min-height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
 }
-.footer-inner {
-  max-width: 1400px;
+.footer-main {
+  width: min(100%, 1180px);
   margin: 0 auto;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 20px;
-  padding: 0 32px;
-  font-size: $font-size-sm;
-  color: $color-footer-text;
-}
-.footer-left {
-  display: flex;
-  align-items: center;
-  gap: 14px;
   color: #4b5563;
-  font-weight: 600;
+  font-size: 0.95rem;
+  letter-spacing: 0;
 }
 .footer-brand {
   display: inline-flex;
   align-items: center;
   gap: 10px;
+  color: #374151;
+  font-weight: 700;
 }
 .footer-mark {
   width: 22px;
   height: 22px;
   padding: 3px;
-  border: 1px solid rgba(25, 179, 107, 0.18);
+  border: 1px solid rgba(15, 107, 104, 0.18);
   border-radius: 999px;
-  background: #f0fdf7;
+  background: #dff5f1;
 }
-.footer-links {
+.footer-nav {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   flex-wrap: wrap;
 }
-.footer-links a {
+.footer-nav a {
   min-height: 32px;
   display: inline-flex;
   align-items: center;
   border-radius: 999px;
   padding: 6px 10px;
   color: #4b5563;
-  text-decoration: none;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  margin: 0;
   transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
 }
-.footer-links a:hover,
-.footer-links a:focus-visible {
-  background: rgba(25, 179, 107, 0.1);
-  color: $color-success;
+.footer-nav a:hover,
+.footer-nav a:focus-visible {
+  background: rgba(15, 107, 104, 0.1);
+  color: #064e4b;
   outline: none;
-  box-shadow: 0 0 0 3px rgba(25, 179, 107, 0.14);
+  box-shadow: 0 0 0 3px rgba(15, 107, 104, 0.14);
 }
-.footer-right {
+.footer-note {
   max-width: 380px;
   color: #667085;
   font-weight: 600;
@@ -207,31 +213,33 @@ const { t } = useI18n()
   }
 
   .footer {
-    padding: 16px 0;
-    padding-bottom: max(16px, env(safe-area-inset-bottom));
+    z-index: 100;
+    backdrop-filter: blur(20px);
+    background: rgba(255, 255, 255, 0.96);
+    border-radius: 18px 18px 0 0;
+    box-shadow: 0 -10px 24px rgba(17, 24, 39, 0.08);
+    padding: 12px 16px max(12px, env(safe-area-inset-bottom));
+    min-height: auto;
+    margin-top: 32px;
   }
 
-  .footer-inner,
-  .footer-left,
-  .footer-links {
+  .footer-main {
     flex-direction: column;
-  }
-
-  .footer-inner {
-    gap: 12px;
-    padding: 0 20px;
-    text-align: left;
-  }
-
-  .footer-left,
-  .footer-links {
-    align-items: flex-start;
+    align-items: center;
     gap: 8px;
   }
 
-  .footer-right {
+  .footer-brand {
+    font-size: 0.9rem;
+  }
+
+  .footer-nav {
+    justify-content: center;
+  }
+
+  .footer-note {
     max-width: none;
-    text-align: left;
+    text-align: center;
   }
 }
 </style> 
