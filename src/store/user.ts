@@ -1,3 +1,4 @@
+import { appleLogin, type AppleLoginDTO } from '@/api/auth'
 import { defineStore } from 'pinia'
 import { logout as logoutApi, loginByEmail, verifyEmailCode, googleLogin as googleLoginApi, googleOAuthCodeLogin as googleOAuthCodeLoginApi } from '@/api/auth'
 import type { UserInfo, LoginVO, ApiResponse, EmailVerifyCodeDTO, GoogleLoginDTO } from '@/types/api'
@@ -26,6 +27,11 @@ export const useUserStore = defineStore('user', {
     },
     async register(_userData: { username: string; password: string; email: string; source: string }) {
       throw new Error('Registration is disabled in this application')
+    },
+    async loginWithApple(dto: AppleLoginDTO) {
+      const response = await appleLogin(dto)
+      this.saveLoginResult(response.data)
+      return response.data
     },
     async loginWithGoogle(dto: GoogleLoginDTO) {
       const response: ApiResponse<LoginVO> = await googleLoginApi(dto)

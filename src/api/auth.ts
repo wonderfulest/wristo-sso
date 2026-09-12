@@ -82,3 +82,12 @@ export const verifyResetToken = (token: string): Promise<ApiResponse<boolean>> =
 export const resetPassword = (token: string, newPassword: string): Promise<ApiResponse<boolean>> => {
   return instance.post('/public/auth/reset-password/submit', { token, newPassword })
 }
+
+export interface AppleLoginDTO {
+  identityToken: string
+  nonce: string
+}
+
+export const appleLogin = (dto: AppleLoginDTO): Promise<ApiResponse<LoginVO>> => {
+  return instance.post('/auth/apple/login', dto)
+}

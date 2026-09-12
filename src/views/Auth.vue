@@ -16,6 +16,14 @@
         {{ t('auth.google') }}
       </button>
 
+      <button v-if="appleConfigured" class="google-btn apple-btn" type="button"
+        :disabled="loading || !appleAttempt" @click="handleAppleLogin">
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="currentColor">
+          <path d="M17.05 12.54c.03 3.23 2.83 4.3 2.86 4.31-.02.08-.45 1.54-1.48 3.05-.9 1.3-1.83 2.6-3.3 2.63-1.45.03-1.92-.85-3.58-.85-1.65 0-2.17.82-3.55.88-1.42.05-2.51-1.41-3.41-2.71-1.85-2.67-3.27-7.54-1.37-10.84.94-1.64 2.62-2.68 4.44-2.71 1.39-.03 2.7.94 3.55.94.85 0 2.45-1.16 4.13-.99.7.03 2.67.28 3.93 2.13-.1.06-2.35 1.37-2.32 4.16zM14.33 4.5c.75-.91 1.26-2.17 1.12-3.43-1.08.04-2.39.72-3.17 1.63-.69.79-1.29 2.05-1.13 3.26 1.2.09 2.43-.61 3.18-1.46z" />
+        </svg>
+        {{ t('auth.apple') }}
+      </button>
+
       <div class="divider">
         <span class="divider-text">{{ t('auth.or') }}</span>
       </div>
@@ -119,6 +127,7 @@ import { getSsoSession, sendEmailCode, ssoLogin } from '@/api/auth'
 import { useUserStore } from '@/store/user'
 import BrandLogo from '@/components/BrandLogo.vue'
 import { translateApiMessage, useI18n } from '@/i18n'
+import { prepareAppleAttempt, appleCredential } from '@/utils/appleSignIn'
 import { resolveSsoClientId } from '@/utils/ssoClient'
 
 declare const google: any
@@ -149,6 +158,46 @@ const nextPath = computed(() => {
 
 const errors = reactive({ email: '', code: '' })
 
+const appleClientId = (import.meta.env.VITE_WRISTO_APPLE_CLIENT_ID || '').trim()
+const appleRedirectUri = (import.meta.env.VITE_WRISTO_APPLE_REDIRECT_URI || '').trim()
+const appleConfigured = Boolean(appleClientId && appleRedirectUri)
+const appleAttempt = ref<Awaited<ReturnType<typeof prepareAppleAttempt>> | null>(null)
+
+async function refreshAppleAttempt() {
+  appleAttempt.value = null
+  if (appleConfigured) {
+    try { appleAttempt.value = await prepareAppleAttempt() }
+    catch { ElMessage.error(t('auth.appleFailed')) }
+  }
+}
+
+async function handleAppleLogin() {
+  const attempt = appleAttempt.value
+  if (loading.value || !attempt) return
+  const sdk = window.AppleID
+  if (!sdk) {
+    ElMessage.error(t('auth.appleUnavailable'))
+    return
+  }
+  loading.value = true
+  appleAttempt.value = null
+  try {
+    sdk.auth.init({ clientId: appleClientId, redirectURI: appleRedirectUri,
+      scope: 'name email', state: attempt.state, nonce: attempt.hashedNonce, usePopup: true })
+    const result = await sdk.auth.signIn()
+    const login = await userStore.loginWithApple(appleCredential(result, attempt))
+    await handleSsoRedirect(login?.token || '')
+  } catch (error: unknown) {
+    const reason = (error as { error?: string } | null)?.error
+    if (reason !== 'popup_closed_by_user' && reason !== 'user_cancelled_authorize' && reason !== 'access_denied') {
+      ElMessage.error(t('auth.appleFailed'))
+    }
+  } finally {
+    await refreshAppleAttempt()
+    loading.value = false
+  }
+}
+
 const googleClientId = import.meta.env.VITE_WRISTO_GOOGLE_CLIENT_ID || ''
 const googleOAuthRedirectUri = resolveGoogleOAuthRedirectUri(import.meta.env.VITE_WRISTO_GOOGLE_OAUTH_REDIRECT_URI)
 
@@ -178,6 +227,7 @@ const clientLabel = computed(() => {
 })
 
 onMounted(async () => {
+  void refreshAppleAttempt()
   redirectUri.value = (route.query.redirect_uri as string) || ''
   if (!redirectUri.value) {
     return
@@ -498,6 +548,18 @@ html, body {
 .google-btn:disabled {
   cursor: not-allowed;
   opacity: 0.6;
+}
+
+.apple-btn {
+  margin-top: 12px;
+  background: #000;
+  border-color: #000;
+  color: #fff;
+}
+
+.apple-btn:hover {
+  background: #222;
+  border-color: #222;
 }
 
 .google-icon {
