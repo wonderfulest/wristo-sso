@@ -4,8 +4,9 @@ import { fileURLToPath, URL } from 'url'
 
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
-  const envDir = fileURLToPath(new URL('..', import.meta.url))
-  const env = loadEnv(mode, envDir, '')
+  const sharedEnvDir = fileURLToPath(new URL('..', import.meta.url))
+  const envDir = fileURLToPath(new URL(mode === 'prod' || mode === 'production' ? '.' : '..', import.meta.url))
+  const env = { ...loadEnv(mode, sharedEnvDir, ''), ...loadEnv(mode, envDir, '') }
 
   return {
     envDir,
