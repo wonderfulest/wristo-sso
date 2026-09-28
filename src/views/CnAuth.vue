@@ -33,6 +33,7 @@
             }}
           </p>
           <XiaohongshuLogin
+            v-if="xiaohongshuAvailable"
             :context="context"
             :available="xiaohongshuAvailable"
             :disabled="busy"
