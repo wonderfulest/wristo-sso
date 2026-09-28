@@ -1,3 +1,4 @@
+import { isChinaSso } from '@/config/region'
 import { createRouter, createWebHistory } from 'vue-router'
 import type { RouteRecordRaw } from 'vue-router'
 import { getRouteLocaleParam, SUPPORTED_LOCALES, useLocaleStore } from '@/store/locale'
@@ -5,6 +6,7 @@ import { getRouteLocaleParam, SUPPORTED_LOCALES, useLocaleStore } from '@/store/
 const langPattern = SUPPORTED_LOCALES.join('|')
 
 const baseRoutes: RouteRecordRaw[] = [
+  { path: '/wechat/callback', component: () => import('@/views/CnAuth.vue'), meta: { requiresAuth: false } },
   {
     path: '/',
     redirect: '/auth'
@@ -12,7 +14,7 @@ const baseRoutes: RouteRecordRaw[] = [
   {
     path: '/auth',
     name: 'Auth',
-    component: () => import('@/views/Auth.vue'),
+    component: () => isChinaSso ? import('@/views/CnAuth.vue') : import('@/views/Auth.vue'),
     meta: { requiresAuth: false }
   },
   {
@@ -69,7 +71,9 @@ router.beforeEach((to, _from, next) => {
   const localeStore = useLocaleStore()
   const routeLang = Array.isArray(to.params.lang) ? to.params.lang[0] : to.params.lang
   const normalizedRouteLang = getRouteLocaleParam(routeLang)
-  if (normalizedRouteLang && normalizedRouteLang !== localeStore.currentLocale) {
+  if (isChinaSso) {
+    localeStore.setLocale('zh')
+  } else if (normalizedRouteLang && normalizedRouteLang !== localeStore.currentLocale) {
     localeStore.setLocale(normalizedRouteLang)
   } else {
     localeStore.syncDocumentLang()

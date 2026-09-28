@@ -8,6 +8,9 @@
   },
   "scripts": {
     "dev": "vite",
+    "build:cn": "vue-tsc && vite build --mode cn",
+    "dev:cn": "vite --mode cn",
+    "test:cn": "node --test tests/cn-login.test.mjs tests/xiaohongshu-login.test.mjs",
     "build": "vue-tsc && vite build --mode prod",
     "preview": "vite preview"
   },
@@ -16,12 +19,14 @@
     "element-plus": "^2.9.11",
     "pinia": "^3.0.2",
     "pinia-plugin-persistedstate": "^4.3.0",
+    "qrcode": "^1.5.4",
     "vue": "^3.4.15",
     "vue-router": "^4.2.5",
     "vuedraggable": "^4.1.0"
   },
   "devDependencies": {
     "@types/node": "^20.11.19",
+    "@types/qrcode": "^1.5.6",
     "@vitejs/plugin-vue": "^5.0.3",
     "@vue/tsconfig": "^0.7.0",
     "sass-embedded": "^1.89.0",

@@ -1,18 +1,18 @@
 <template>
   <div class="global-layout">
-    <LanguageSwitcher />
+    <LanguageSwitcher v-if="!isChinaSso" />
     <main class="main-content">
       <router-view />
     </main>
     <footer class="footer">
       <div class="footer-main desktop-layout">
         <div class="footer-brand">
-          <img class="footer-mark" src="https://cdn.wristo.io/brands/wristo-logo/svg/wristo-mark.svg" alt="" aria-hidden="true" />
+          <img class="footer-mark" src="/wristo-mark.svg" alt="" aria-hidden="true" />
           <span>© Wristo 2026</span>
         </div>
         <nav class="footer-nav" aria-label="Footer links">
-          <a href="#">{{ t('footer.terms') }}</a>
-          <a href="#">{{ t('footer.privacy') }}</a>
+          <a :href="isChinaSso ? 'https://wristo.cn/legal' : '#'">{{ t('footer.terms') }}</a>
+          <a :href="isChinaSso ? 'https://wristo.cn/legal' : '#'">{{ t('footer.privacy') }}</a>
         </nav>
         <div class="footer-note">
           {{ t('footer.disclaimer') }}
@@ -23,6 +23,7 @@
 </template>
 
 <script setup lang="ts">
+import { isChinaSso } from '@/config/region'
 import LanguageSwitcher from '@/components/LanguageSwitcher.vue'
 import { useI18n } from '@/i18n'
 
@@ -94,6 +95,7 @@ const { t } = useI18n()
   flex-direction: column;
 }
 .footer {
+  box-sizing: border-box;
   color: $color-footer-text;
   font-size: 0.95rem;
   flex-shrink: 0;

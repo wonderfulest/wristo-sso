@@ -1,3 +1,4 @@
+import { isChinaSso } from '@/config/region'
 import { createApp } from 'vue'
 import './assets/styles/global.scss'
 import './style.css'
@@ -18,3 +19,10 @@ app.use(ElementPlus)
 
 app.mount('#app')
 
+
+// Domestic login must never load Google or Apple SDKs.
+if (!isChinaSso) {
+  for (const src of ['https://appleid.cdn-apple.com/appleauth/static/jsapi/appleid/1/en_US/appleid.auth.js', 'https://accounts.google.com/gsi/client']) {
+    const script = document.createElement('script'); script.src = src; script.async = true; document.head.appendChild(script)
+  }
+}
