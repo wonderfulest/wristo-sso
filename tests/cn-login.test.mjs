@@ -17,3 +17,14 @@ test('only exact CN callbacks and S256 are accepted', () => {
 test('PKCE matches RFC 7636 test vector', async () => {
   assert.equal(await challenge('dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk'), 'E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM')
 })
+
+test('Studio requires its own exact callback and PKCE state', () => {
+  const studio = { ...query, client: 'studio', redirect_uri: 'https://studio.wristo.io/auth/callback' }
+  assert.equal(parseCnLogin(studio).clientId, 'studio')
+  assert.equal(parseCnLogin({ ...studio, redirect_uri: 'http://localhost:3004/auth/callback' }).clientId, 'studio')
+  for (const redirect_uri of [query.redirect_uri, 'https://studio.wristo.io.evil.test/auth/callback', 'http://localhost:3008/auth/callback']) {
+    assert.throws(() => parseCnLogin({ ...studio, redirect_uri }))
+  }
+  assert.throws(() => parseCnLogin({ ...query, redirect_uri: studio.redirect_uri }))
+  assert.throws(() => parseCnLogin({ ...studio, code_challenge: '' }))
+})

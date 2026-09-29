@@ -1,15 +1,15 @@
 <template>
   <section class="cn-auth">
-    <a class="cn-brand" href="https://wristo.cn"
+    <a class="cn-brand" :href="homeUrl"
       ><img src="/wristo-mark.svg" alt="" />Wristo</a
     >
-    <p class="eyebrow">中国站</p>
+    <p class="eyebrow">{{ isStudio ? 'Wristo Studio' : '中国站' }}</p>
     <h1>{{ binding ? '关联你的 Wristo 账号' : '登录 Wristo' }}</h1>
     <p class="intro">
       {{
         binding
           ? `验证邮箱后，${providerName}和邮箱都可以登录同一个账号。已有账号请填写原邮箱。`
-          : '一个账号，管理你的表盘与会员。'
+          : isStudio ? '登录后即可上传你的表盘设计。' : '一个账号，管理你的表盘与会员。'
       }}
     </p>
     <div class="cn-card">
@@ -92,10 +92,10 @@
               : '未注册的邮箱验证后将自动创建账号。'
           }}
         </p>
-        <a v-if="binding" href="https://wristo.cn/account">重新选择登录方式</a>
+        <a v-if="binding" :href="homeUrl">重新选择登录方式</a>
       </template>
-      <a v-if="fatal || !context" href="https://wristo.cn/account"
-        >返回中国站重新登录</a
+      <a v-if="fatal || !context" :href="homeUrl"
+        >返回后重新登录</a
       >
     </div>
     <p class="legal">
@@ -121,6 +121,8 @@ import {
 
 const route = useRoute()
 const context = ref<CnLoginContext | null>(null)
+const isStudio = computed(() => context.value?.clientId === 'studio' || route.query.client === 'studio')
+const homeUrl = computed(() => isStudio.value ? 'https://studio.wristo.io' : 'https://wristo.cn/account')
 const email = ref(''),
   code = ref(''),
   error = ref(''),
@@ -155,11 +157,11 @@ onMounted(async () => {
         Date.now() - saved.createdAt > 600000 ||
         saved.state !== route.query.state
       )
-        throw new Error('登录已失效，请返回中国站重新登录。')
+        throw new Error('登录已失效，请返回后重新登录。')
       context.value = saved.context
       verifier = saved.verifier
       if (route.query.error || typeof route.query.ticket !== 'string')
-        throw new Error('微信授权未完成，请返回中国站重新登录。')
+        throw new Error('微信授权未完成，请返回后重新登录。')
       ticket = route.query.ticket
       const result = await redeem()
       binding.value = result.requiresEmail
@@ -171,7 +173,7 @@ onMounted(async () => {
         officialAccount: boolean
       }>('/auth/wechat/capabilities').catch(() => ({ website: false, officialAccount: false })),
       cnRequest<{ website: boolean }>('/auth/xiaohongshu/capabilities').catch(() => ({ website: false }))])
-      xiaohongshuAvailable.value = xhsCapabilities.website
+      xiaohongshuAvailable.value = context.value.clientId !== 'studio' && xhsCapabilities.website
       wechatAvailable.value = inWechat
         ? capabilities.officialAccount
         : capabilities.website
@@ -182,7 +184,7 @@ onMounted(async () => {
       if (session?.authenticated) {
         const ctx = context.value
         const code = await cnRequest<string>('/sso/login', {
-          clientId: 'cn',
+          clientId: ctx.clientId || 'cn',
           redirectUri: ctx.redirectUri,
           codeChallenge: ctx.codeChallenge,
         })

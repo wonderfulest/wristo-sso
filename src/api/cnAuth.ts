@@ -52,7 +52,7 @@ export async function emailSignIn(
   return cnRequest<string>(
     '/sso/login',
     {
-      clientId: 'cn',
+      clientId: context.clientId || 'cn',
       redirectUri: context.redirectUri,
       codeChallenge: context.codeChallenge,
     },
