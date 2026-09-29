@@ -28,3 +28,34 @@ test('Studio requires its own exact callback and PKCE state', () => {
   assert.throws(() => parseCnLogin({ ...query, redirect_uri: studio.redirect_uri }))
   assert.throws(() => parseCnLogin({ ...studio, code_challenge: '' }))
 })
+
+test('password and code sign-in exchange their token for the correct PKCE client', async () => {
+  const { default: vm } = await import('node:vm')
+  const apiSource = await readFile(new URL('../src/api/cnAuth.ts', import.meta.url), 'utf8')
+  const output = ts.transpileModule(apiSource, { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText
+  const calls = []
+  const exports = {}
+  let token = 'email-session'
+  vm.runInNewContext(output, { exports, Error, require: name => name === 'axios' ? { default: {
+    create: () => ({ request: async config => {
+      calls.push(config)
+      return { data: { code: 200, data: config.url === '/sso/login' ? 'authorization-code' : { token } } }
+    } }),
+    isAxiosError: () => false,
+  } } : { translateApiMessage: value => value } })
+  const context = { clientId: 'cn', redirectUri: query.redirect_uri, codeChallenge: query.code_challenge }
+  assert.equal(await exports.passwordSignIn(context, 'member@example.com', ' pass word '), 'authorization-code')
+  assert.equal(calls[0].url, '/public/auth/login/email')
+  assert.equal(calls[0].data.password, ' pass word ')
+  assert.equal(calls[0].headers, undefined)
+  assert.equal(calls[1].headers.Authorization, 'Bearer email-session')
+  assert.equal(calls[1].data.codeChallenge, query.code_challenge)
+  assert.equal(calls[1].data.redirectUri, query.redirect_uri)
+  await exports.emailSignIn({ ...context, clientId: 'studio' }, 'member@example.com', '123456')
+  assert.equal(calls[2].url, '/auth/email/verify-code')
+  assert.equal(calls[2].data.code, '123456')
+  assert.equal(calls[3].data.clientId, 'studio')
+  token = ''
+  await assert.rejects(() => exports.passwordSignIn(context, 'member@example.com', 'password'), /登录失败/)
+  assert.equal(calls.length, 5)
+})

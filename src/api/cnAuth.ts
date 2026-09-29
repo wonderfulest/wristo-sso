@@ -49,6 +49,14 @@ export async function emailSignIn(
     email,
     code,
   })
+  return authorizeEmailSession(context, login.token)
+}
+export async function passwordSignIn(context: CnLoginContext, email: string, password: string) {
+  const login = await cnRequest<{ token: string }>('/public/auth/login/email', { email, password })
+  return authorizeEmailSession(context, login.token)
+}
+function authorizeEmailSession(context: CnLoginContext, token: string) {
+  if (!token || typeof token !== 'string' || !token.trim()) throw new Error('登录失败，请重试。')
   return cnRequest<string>(
     '/sso/login',
     {
@@ -56,7 +64,7 @@ export async function emailSignIn(
       redirectUri: context.redirectUri,
       codeChallenge: context.codeChallenge,
     },
-    login.token,
+    token,
   )
 }
 export interface SocialSignInResult {
