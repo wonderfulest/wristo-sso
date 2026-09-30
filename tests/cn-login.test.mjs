@@ -59,3 +59,13 @@ test('password and code sign-in exchange their token for the correct PKCE client
   await assert.rejects(() => exports.passwordSignIn(context, 'member@example.com', 'password'), /登录失败/)
   assert.equal(calls.length, 5)
 })
+
+ test('CN Studio permits only its exact production and development callbacks', () => {
+  const studio = { ...query, client: 'studio' }
+  for (const redirect_uri of ['https://studio.wristo.cn/auth/callback', 'http://localhost:5190/auth/callback', 'http://127.0.0.1:5190/auth/callback']) {
+    assert.equal(parseCnLogin({ ...studio, redirect_uri }).redirectUri, redirect_uri)
+  }
+  for (const redirect_uri of ['https://studio.wristo.cn.evil.test/auth/callback', 'https://studio.wristo.cn/auth/callback?next=x', 'https://studio.wristo.cn:5190/auth/callback', 'http://localhost:5191/auth/callback']) {
+    assert.throws(() => parseCnLogin({ ...studio, redirect_uri }))
+  }
+})

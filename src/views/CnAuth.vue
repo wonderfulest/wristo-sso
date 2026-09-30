@@ -121,7 +121,7 @@ import {
 const route = useRoute()
 const context = ref<CnLoginContext | null>(null)
 const isStudio = computed(() => context.value?.clientId === 'studio' || route.query.client === 'studio')
-const homeUrl = computed(() => isStudio.value ? 'https://studio.wristo.io' : 'https://wristo.cn/account')
+const homeUrl = computed(() => isStudio.value ? (context.value ? new URL(context.value.redirectUri).origin : 'https://studio.wristo.cn') : 'https://wristo.cn/account')
 const loginMode = ref<'password' | 'code'>('password')
 const password = ref('')
 const email = ref(''),

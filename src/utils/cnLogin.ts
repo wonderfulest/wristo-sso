@@ -11,9 +11,9 @@ export function parseCnLogin(query: Record<string, unknown>): CnLoginContext {
   const local =
     ['localhost', '127.0.0.1'].includes(url.hostname) &&
     url.protocol === 'http:' &&
-    url.port === (studio ? '3004' : '3008')
+    (studio ? ['3004', '5190'] : ['3008']).includes(url.port)
   const production =
-    (studio ? ['studio.wristo.io'] : ['wristo.cn', 'www.wristo.cn']).includes(url.hostname) &&
+    (studio ? ['studio.wristo.io', 'studio.wristo.cn'] : ['wristo.cn', 'www.wristo.cn']).includes(url.hostname) &&
     url.protocol === 'https:' &&
     !url.port
   if (
