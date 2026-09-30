@@ -368,10 +368,13 @@ async function handleSsoRedirect(token: string) {
     return
   }
   try {
-    const ssoRes = await ssoLogin(clientId.value, target, token || undefined)
+    const ssoRes = await ssoLogin(clientId.value, target, token || undefined, typeof route.query.code_challenge === 'string' ? route.query.code_challenge : undefined)
     if (ssoRes.code === 0 && ssoRes.data) {
       const callbackUrl = new URL(target, window.location.origin)
       callbackUrl.searchParams.set('code', ssoRes.data)
+      if (typeof route.query.state === 'string') {
+        callbackUrl.searchParams.set('state', route.query.state)
+      }
       if (nextPath.value) {
         callbackUrl.searchParams.set('next', nextPath.value)
       }

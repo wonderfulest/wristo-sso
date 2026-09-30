@@ -15,11 +15,11 @@ export const getSsoSession = (): Promise<ApiResponse<SsoSessionData>> => {
 }
 
 // SSO 登录下发 code
-export const ssoLogin = (clientId: string, redirectUri: string, token?: string): Promise<ApiResponse<string>> => {
+export const ssoLogin = (clientId: string, redirectUri: string, token?: string, codeChallenge?: string): Promise<ApiResponse<string>> => {
   const config = token
     ? { headers: { Authorization: `Bearer ${token}` } }
     : undefined
-  return instance.post('/sso/login', { clientId, redirectUri }, config)
+  return instance.post('/sso/login', { clientId, redirectUri, codeChallenge }, config)
 }
 
 export interface LoginByEmailDTO {

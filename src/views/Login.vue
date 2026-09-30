@@ -67,6 +67,9 @@ const nextPath = computed(() => {
 const redirectWithCode = (target: string, code: string) => {
   const callbackUrl = new URL(target, window.location.origin)
   callbackUrl.searchParams.set('code', code)
+  if (typeof route.query.state === 'string') {
+    callbackUrl.searchParams.set('state', route.query.state)
+  }
   if (nextPath.value) {
     callbackUrl.searchParams.set('next', nextPath.value)
   }
@@ -88,7 +91,7 @@ onMounted(async () => {
   try {
     const session = await getSsoSession()
     if (session.code === 0 && session.data?.authenticated) {
-      const ssoRes: ApiResponse<string> = await ssoLogin(clientId.value, redirectUri.value)
+      const ssoRes: ApiResponse<string> = await ssoLogin(clientId.value, redirectUri.value, undefined, typeof route.query.code_challenge === 'string' ? route.query.code_challenge : undefined)
       if (ssoRes.code === 0 && ssoRes.data) {
         redirectWithCode(redirectUri.value, ssoRes.data)
       }
@@ -114,7 +117,7 @@ const handleLogin = async () => {
         return
       }
     }
-    const ssoRes: ApiResponse<string> = await ssoLogin(clientId.value, redirectUri.value, token || '')
+    const ssoRes: ApiResponse<string> = await ssoLogin(clientId.value, redirectUri.value, token || undefined, typeof route.query.code_challenge === 'string' ? route.query.code_challenge : undefined)
     if (ssoRes.code === 0 && ssoRes.data) {
       redirectWithCode(redirectUri.value, ssoRes.data)
     } else {
