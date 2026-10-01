@@ -15,6 +15,8 @@ export default defineConfig(({ mode }) => {
       'import.meta.env.VITE_WRISTO_DEFAULT_SSO_REDIRECT_URI': JSON.stringify(env.VITE_WRISTO_DEFAULT_SSO_REDIRECT_URI || ''),
       'import.meta.env.VITE_WRISTO_GOOGLE_OAUTH_REDIRECT_URI': JSON.stringify(env.VITE_WRISTO_GOOGLE_OAUTH_REDIRECT_URI || ''),
       'import.meta.env.VITE_WRISTO_GOOGLE_CLIENT_ID': JSON.stringify(env.VITE_WRISTO_GOOGLE_CLIENT_ID || ''),
+      'import.meta.env.VITE_WRISTO_APPLE_CLIENT_ID': JSON.stringify(env.VITE_WRISTO_APPLE_CLIENT_ID || ''),
+      'import.meta.env.VITE_WRISTO_APPLE_REDIRECT_URI': JSON.stringify(env.VITE_WRISTO_APPLE_REDIRECT_URI || ''),
     },
     plugins: [
       vue()
