@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { registrationSource } from '@/utils/ssoClient'
 import { ElMessage } from 'element-plus'
 import { BizErrorCode } from '@/constant/errorCode'
 import type { ApiResponse } from '@/types/api'
@@ -16,6 +17,7 @@ const instance = axios.create({
 
 // 请求拦截器
 instance.interceptors.request.use(config => {
+  config.headers['X-Registration-Source'] = registrationSource(window.location.search)
   const token = localStorage.getItem('token')
   if (token) {
     config.headers.Authorization = `Bearer ${token}`

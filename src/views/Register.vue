@@ -61,6 +61,7 @@
 </template>
 
 <script setup lang="ts">
+import { registrationSource } from '@/utils/ssoClient'
 import { ref, reactive, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useUserStore } from '@/store/user'
@@ -85,11 +86,11 @@ const errors = reactive({
   confirmPassword: ''
 })
 
-const client = ref('')
+const client = ref('sso')
 const redirectUri = ref('')
 
 onMounted(() => {
-  client.value = route.query.client as string || ''
+  client.value = registrationSource(window.location.search)
   redirectUri.value = route.query.redirect_uri as string || ''
 })
 

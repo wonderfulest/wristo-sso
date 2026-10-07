@@ -41,3 +41,11 @@ export function inferSsoClientIdFromRedirectUri(redirectUri: string): SsoClientI
 export function resolveSsoClientId(clientId: unknown, redirectUri: string, fallback: SsoClientId = 'store'): SsoClientId {
   return inferSsoClientIdFromRedirectUri(redirectUri) || normalizeSsoClientId(clientId) || fallback
 }
+
+/** Product entry for registration analytics; do not infer it from a linked provider. */
+export function registrationSource(search: string): string {
+  const params = new URLSearchParams(search)
+  const client = params.get('client')
+  return inferSsoClientIdFromRedirectUri(params.get('redirect_uri') || '')
+    || normalizeSsoClientId(client) || (client === 'cn' ? 'cn' : 'sso')
+}

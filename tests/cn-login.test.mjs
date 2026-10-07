@@ -54,6 +54,7 @@ test('password and code sign-in exchange their token for the correct PKCE client
   await exports.emailSignIn({ ...context, clientId: 'studio' }, 'member@example.com', '123456')
   assert.equal(calls[2].url, '/auth/email/verify-code')
   assert.equal(calls[2].data.code, '123456')
+  assert.equal(calls[2].headers['X-Registration-Source'], 'studio')
   assert.equal(calls[3].data.clientId, 'studio')
   token = ''
   await assert.rejects(() => exports.passwordSignIn(context, 'member@example.com', 'password'), /登录失败/)

@@ -18,13 +18,16 @@ export async function cnRequest<T>(
   path: string,
   body?: unknown,
   token?: string,
+  registrationSource?: string,
 ): Promise<T> {
   try {
     const response = await http.request({
       url: path,
       method: body === undefined ? 'GET' : 'POST',
       data: body,
-      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      headers: registrationSource
+        ? { 'X-Registration-Source': registrationSource, ...(token ? { Authorization: `Bearer ${token}` } : {}) }
+        : token ? { Authorization: `Bearer ${token}` } : undefined,
     })
     const result = response.data
     if (result.code !== 0 && result.code !== 200)
@@ -48,7 +51,7 @@ export async function emailSignIn(
   const login = await cnRequest<{ token: string }>('/auth/email/verify-code', {
     email,
     code,
-  })
+  }, undefined, context.clientId || 'cn')
   return authorizeEmailSession(context, login.token)
 }
 export async function passwordSignIn(context: CnLoginContext, email: string, password: string) {
