@@ -249,7 +249,9 @@ async function startWechat() {
         channel: inWechat ? 'official-account' : 'website',
         browserState: state,
         browserChallenge: await challenge(verifier),
-        ...context.value,
+        redirectUri: context.value.redirectUri,
+        state: context.value.state,
+        codeChallenge: context.value.codeChallenge,
       },
     )
     window.location.assign(result.authorizationUrl)

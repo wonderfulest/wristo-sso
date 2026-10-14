@@ -6,6 +6,35 @@ const source = await readFile(new URL('../src/utils/cnLogin.ts', import.meta.url
 const js = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.ESNext } }).outputText
 const { parseCnLogin, challenge } = await import(`data:text/javascript;base64,${Buffer.from(js).toString('base64')}`)
 const query = { client: 'cn', redirect_uri: 'https://wristo.cn/auth/callback', state: 'a'.repeat(64), code_challenge: 'b'.repeat(43), code_challenge_method: 'S256' }
+test('WeChat start sends only fields accepted by the backend Attempt contract', async () => {
+  const vm = await import('node:vm')
+  const view = await readFile(new URL('../src/views/CnAuth.vue', import.meta.url), 'utf8')
+  const script = view.match(/<script setup lang="ts">([\s\S]*?)<\/script>/)[1]
+  const ast = ts.createSourceFile('CnAuth.ts', script, ts.ScriptTarget.Latest, true)
+  const start = ast.statements.find(node => ts.isFunctionDeclaration(node) && node.name?.text === 'startWechat')
+  const code = ts.transpileModule(start.getText(ast), {}).outputText
+  for (const inWechat of [false, true]) {
+    let request, location, saved
+    const context = { clientId: 'cn', redirectUri: query.redirect_uri, state: query.state, codeChallenge: query.code_challenge }
+    const sandbox = {
+      context: { value: context }, busy: { value: false }, error: { value: '' }, inWechat,
+      ATTEMPT_KEY: 'attempt', randomVerifier: () => 'c'.repeat(64), challenge,
+      sessionStorage: { setItem: (_, value) => { saved = JSON.parse(value) } },
+      cnRequest: async (url, body) => { request = { url, body }; return { authorizationUrl: 'https://open.weixin.qq.com/connect/qrconnect' } },
+      window: { location: { assign: value => { location = value } } },
+      fail: error => { throw error },
+    }
+    await vm.runInNewContext(`${code}\nstartWechat()`, sandbox)
+    assert.equal(request.url, '/auth/wechat/start')
+    assert.deepEqual(JSON.parse(JSON.stringify(request.body)), {
+      channel: inWechat ? 'official-account' : 'website', browserState: 'c'.repeat(64),
+      browserChallenge: await challenge('c'.repeat(64)), redirectUri: query.redirect_uri,
+      state: query.state, codeChallenge: query.code_challenge,
+    })
+    assert.deepEqual(saved.context, context)
+    assert.equal(location, 'https://open.weixin.qq.com/connect/qrconnect')
+  }
+})
 test('only exact CN callbacks and S256 are accepted', () => {
   assert.equal(parseCnLogin(query).redirectUri, query.redirect_uri)
   for (const redirect_uri of ['https://wristo.cn.evil.test/auth/callback', 'https://evil.test/auth/callback', 'https://wristo.cn/auth/callback?next=x', 'https://user@wristo.cn/auth/callback', 'http://wristo.cn/auth/callback']) {
