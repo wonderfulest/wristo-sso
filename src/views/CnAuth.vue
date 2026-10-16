@@ -3,13 +3,13 @@
     <a class="cn-brand" :href="homeUrl"
       ><img src="/wristo-mark.svg" alt="" />Wristo</a
     >
-    <p class="eyebrow">{{ isStudio ? 'Wristo Studio' : '中国站' }}</p>
+    <p class="eyebrow">{{ isDashboard ? 'Wristo Dashboard' : isStudio ? 'Wristo Studio' : '中国站' }}</p>
     <h1>{{ binding ? '关联你的 Wristo 账号' : '登录 Wristo' }}</h1>
     <p class="intro">
       {{
         binding
           ? `验证邮箱后，${providerName}和邮箱都可以登录同一个账号。已有账号请填写原邮箱。`
-          : isStudio ? '登录后即可上传你的表盘设计。' : '一个账号，管理你的表盘与会员。'
+          : isDashboard ? '登录管理员账号，管理国内站设计与打包任务。' : isStudio ? '登录后即可上传你的表盘设计。' : '一个账号，管理你的表盘与会员。'
       }}
     </p>
     <div class="cn-card">
@@ -25,7 +25,7 @@
           </button>
           <p v-if="!wechatAvailable" class="hint">微信登录暂未开通，请使用邮箱登录</p>
           <XiaohongshuLogin
-            v-if="!isStudio"
+            v-if="!isStudio && !isDashboard"
             :context="context"
             :available="xiaohongshuAvailable"
             :disabled="busy"
@@ -121,7 +121,8 @@ import {
 const route = useRoute()
 const context = ref<CnLoginContext | null>(null)
 const isStudio = computed(() => context.value?.clientId === 'studio' || route.query.client === 'studio')
-const homeUrl = computed(() => isStudio.value ? (context.value ? new URL(context.value.redirectUri).origin : 'https://studio.wristo.cn') : 'https://wristo.cn/account')
+const isDashboard = computed(() => context.value?.clientId === 'dashboard' || route.query.client === 'dashboard')
+const homeUrl = computed(() => isDashboard.value ? (context.value ? new URL(context.value.redirectUri).origin : 'https://dashboard.wristo.cn') : isStudio.value ? (context.value ? new URL(context.value.redirectUri).origin : 'https://studio.wristo.cn') : 'https://wristo.cn/account')
 const loginMode = ref<'password' | 'code'>('password')
 const password = ref('')
 const email = ref(''),
@@ -183,7 +184,7 @@ onMounted(async () => {
         officialAccount: boolean
       }>('/auth/wechat/capabilities').catch(() => ({ website: false, officialAccount: false })),
       cnRequest<{ website: boolean }>('/auth/xiaohongshu/capabilities').catch(() => ({ website: false }))])
-      xiaohongshuAvailable.value = context.value.clientId !== 'studio' && xhsCapabilities.website
+      xiaohongshuAvailable.value = (context.value.clientId || 'cn') === 'cn' && xhsCapabilities.website
       wechatAvailable.value = inWechat
         ? capabilities.officialAccount
         : capabilities.website

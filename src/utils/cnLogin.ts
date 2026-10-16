@@ -1,19 +1,21 @@
+export type CnClientId = 'cn' | 'studio' | 'dashboard'
 export interface CnLoginContext {
-  clientId?: 'cn' | 'studio'
+  clientId?: CnClientId
   redirectUri: string
   state: string
   codeChallenge: string
 }
 export function parseCnLogin(query: Record<string, unknown>): CnLoginContext {
   const studio = query.client === 'studio'
+  const dashboard = query.client === 'dashboard'
   const redirectUri = String(query.redirect_uri || '')
   const url = new URL(redirectUri)
   const local =
     ['localhost', '127.0.0.1'].includes(url.hostname) &&
     url.protocol === 'http:' &&
-    (studio ? ['3004', '5190'] : ['3008']).includes(url.port)
+    (dashboard ? ['3009'] : studio ? ['3004', '5190'] : ['3008']).includes(url.port)
   const production =
-    (studio ? ['studio.wristo.io', 'studio.wristo.cn'] : ['wristo.cn', 'www.wristo.cn']).includes(url.hostname) &&
+    (dashboard ? ['dashboard.wristo.cn'] : studio ? ['studio.wristo.io', 'studio.wristo.cn'] : ['wristo.cn', 'www.wristo.cn']).includes(url.hostname) &&
     url.protocol === 'https:' &&
     !url.port
   if (
@@ -23,7 +25,7 @@ export function parseCnLogin(query: Record<string, unknown>): CnLoginContext {
     url.hash ||
     url.username ||
     url.password ||
-    !['cn', 'studio'].includes(String(query.client)) ||
+    !['cn', 'studio', 'dashboard'].includes(String(query.client)) ||
     !/^[a-f0-9]{64}$/.test(String(query.state)) ||
     !/^[A-Za-z0-9_-]{43}$/.test(String(query.code_challenge)) ||
     query.code_challenge_method !== 'S256'
@@ -31,7 +33,7 @@ export function parseCnLogin(query: Record<string, unknown>): CnLoginContext {
     throw new Error('登录链接已失效，请返回中国站重新登录。')
   }
   return {
-    clientId: studio ? 'studio' : 'cn',
+    clientId: dashboard ? 'dashboard' : studio ? 'studio' : 'cn',
     redirectUri,
     state: String(query.state),
     codeChallenge: String(query.code_challenge),

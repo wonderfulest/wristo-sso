@@ -1,6 +1,6 @@
 import axios from 'axios'
 import { translateApiMessage } from '@/i18n'
-import type { CnLoginContext } from '@/utils/cnLogin'
+import type { CnLoginContext, CnClientId } from '@/utils/cnLogin'
 
 // A dedicated client avoids attaching stale international-site bearer tokens.
 const http = axios.create({
@@ -18,7 +18,7 @@ export async function cnRequest<T>(
   path: string,
   body?: unknown,
   token?: string,
-  registrationSource?: string,
+  registrationSource?: CnClientId,
 ): Promise<T> {
   try {
     const response = await http.request({

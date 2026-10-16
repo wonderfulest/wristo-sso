@@ -85,9 +85,13 @@ test('password and code sign-in exchange their token for the correct PKCE client
   assert.equal(calls[2].data.code, '123456')
   assert.equal(calls[2].headers['X-Registration-Source'], 'studio')
   assert.equal(calls[3].data.clientId, 'studio')
+  await exports.emailSignIn({ ...context, clientId: 'dashboard', redirectUri: 'https://dashboard.wristo.cn/auth/callback' }, 'admin@example.com', '123456')
+  assert.equal(calls[4].headers['X-Registration-Source'], 'dashboard')
+  assert.equal(calls[5].data.clientId, 'dashboard')
+  assert.equal(calls[5].data.redirectUri, 'https://dashboard.wristo.cn/auth/callback')
   token = ''
   await assert.rejects(() => exports.passwordSignIn(context, 'member@example.com', 'password'), /登录失败/)
-  assert.equal(calls.length, 5)
+  assert.equal(calls.length, 7)
 })
 
  test('CN Studio permits only its exact production and development callbacks', () => {
@@ -98,4 +102,17 @@ test('password and code sign-in exchange their token for the correct PKCE client
   for (const redirect_uri of ['https://studio.wristo.cn.evil.test/auth/callback', 'https://studio.wristo.cn/auth/callback?next=x', 'https://studio.wristo.cn:5190/auth/callback', 'http://localhost:5191/auth/callback']) {
     assert.throws(() => parseCnLogin({ ...studio, redirect_uri }))
   }
+})
+
+
+test('Dashboard accepts only its CN production and port 3009 callbacks', () => {
+  const dashboard = { ...query, client: 'dashboard' }
+  for (const redirect_uri of ['https://dashboard.wristo.cn/auth/callback', 'http://localhost:3009/auth/callback', 'http://127.0.0.1:3009/auth/callback']) {
+    assert.equal(parseCnLogin({ ...dashboard, redirect_uri }).clientId, 'dashboard')
+  }
+  for (const redirect_uri of ['https://dashboard.wristo.io/auth/callback', 'https://dashboard.wristo.cn.evil.test/auth/callback', 'https://dashboard.wristo.cn/auth/callback?next=x', 'http://dashboard.wristo.cn/auth/callback', 'https://user@dashboard.wristo.cn/auth/callback', 'http://localhost:3008/auth/callback', 'http://localhost:3002/auth/callback', 'https://studio.wristo.cn/auth/callback']) {
+    assert.throws(() => parseCnLogin({ ...dashboard, redirect_uri }))
+  }
+  assert.throws(() => parseCnLogin({ ...dashboard, redirect_uri: 'https://dashboard.wristo.cn/auth/callback', code_challenge_method: 'plain' }))
+  assert.throws(() => parseCnLogin({ ...query, redirect_uri: 'https://dashboard.wristo.cn/auth/callback' }))
 })
