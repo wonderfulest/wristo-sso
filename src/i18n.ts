@@ -626,6 +626,7 @@ export function translateApiMessage(message: unknown, fallbackKey: MessageKey = 
     if (rule) {
       return translateMessage(rule.key)
     }
+    return text
   }
   return translateMessage(fallbackKey)
 }
