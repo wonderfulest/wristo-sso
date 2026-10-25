@@ -219,6 +219,7 @@ function resolveGoogleOAuthRedirectUri(configuredRedirectUri?: string) {
 
 const clientLabel = computed(() => {
   const client = clientId.value
+  if (client === 'image') return 'Wristo Image'
   if (client === 'studio') return 'Wristo Studio'
   if (client === 'store') return 'Wristo Store'
   if (client === 'merchant') return 'Wristo Merchant'

@@ -1,4 +1,4 @@
-const KNOWN_CLIENTS = ['store', 'dashboard', 'merchant', 'studio', 'growth'] as const
+const KNOWN_CLIENTS = ['store', 'dashboard', 'merchant', 'studio', 'growth', 'image'] as const
 
 export type SsoClientId = typeof KNOWN_CLIENTS[number]
 
@@ -7,10 +7,12 @@ const LOCAL_PORT_CLIENTS: Record<string, SsoClientId> = {
   '3002': 'dashboard',
   '3003': 'merchant',
   '3004': 'studio',
-  '3006': 'growth'
+  '3006': 'growth',
+  '3007': 'image'
 }
 
 const HOST_CLIENTS: Array<[RegExp, SsoClientId]> = [
+  [/(^|\.)image\.wristo\.io$/i, 'image'],
   [/(^|\.)dashboard\.wristo\.io$/i, 'dashboard'],
   [/(^|\.)merchant\.wristo\.io$/i, 'merchant'],
   [/(^|\.)studio\.wristo\.io$/i, 'studio'],
