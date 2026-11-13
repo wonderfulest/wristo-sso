@@ -1,3 +1,4 @@
+import { installUserActivity } from './utils/userActivity'
 import { isChinaSso } from '@/config/region'
 import { createApp } from 'vue'
 import './assets/styles/global.scss'
@@ -26,3 +27,5 @@ if (!isChinaSso) {
     const script = document.createElement('script'); script.src = src; script.async = true; document.head.appendChild(script)
   }
 }
+
+installUserActivity()

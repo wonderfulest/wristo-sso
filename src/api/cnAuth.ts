@@ -32,6 +32,16 @@ export async function cnRequest<T>(
     const result = response.data
     if (result.code !== 0 && result.code !== 200)
       throw new Error(message(result.msg))
+    // Foreground authentication completions also cover cookie-only social SSO.
+    const authenticated = path === '/sso/login' ||
+      (/^\/auth\/(wechat|xiaohongshu)\/redeem$/.test(path) && result.data?.requiresEmail === false)
+    if (authenticated && document.visibilityState === 'visible') {
+      try {
+        await http.post('/user-activity', { platform: 'sso' }, {
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined, timeout: 3000,
+        })
+      } catch { /* A telemetry failure must never prevent the login redirect. */ }
+    }
     return result.data as T
   } catch (error) {
     if (axios.isAxiosError(error))
