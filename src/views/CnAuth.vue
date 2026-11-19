@@ -24,8 +24,9 @@
             {{ inWechat ? '微信授权登录' : '微信扫码登录' }}
           </button>
           <p v-if="!wechatAvailable" class="hint">微信登录暂未开通，请使用邮箱登录</p>
+          <!-- 暂时隐藏小红书登录入口，保留登录实现。 -->
           <XiaohongshuLogin
-            v-if="!isStudio && !isDashboard"
+            v-if="showXiaohongshuLogin && !isStudio && !isDashboard"
             :context="context"
             :available="xiaohongshuAvailable"
             :disabled="busy"
@@ -135,6 +136,7 @@ const busy = ref(false),
   cooldown = ref(0)
 const inWechat = /MicroMessenger/i.test(navigator.userAgent)
 const wechatAvailable = ref(false)
+const showXiaohongshuLogin = false
 const xiaohongshuAvailable = ref(false), xhsActive = ref(false)
 const bindingProvider = ref<'wechat' | 'xiaohongshu'>('wechat')
 const providerName = computed(() => bindingProvider.value === 'xiaohongshu' ? '小红书' : '微信')
