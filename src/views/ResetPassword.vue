@@ -6,6 +6,7 @@
     <div v-else>
       <div v-if="!tokenValid" class="reset-error">
         {{ t('reset.tokenFailed') }}
+        <router-link :to="forgot">{{ t('forgot.title') }}</router-link>
       </div>
       <form v-else class="reset-form" @submit.prevent="handleReset">
         <label class="reset-label" for="password">{{ t('reset.newPassword') }}</label>
@@ -13,6 +14,7 @@
           id="password"
           v-model="password"
           type="password"
+          autocomplete="new-password"
           class="reset-input"
           required
           :placeholder="t('reset.newPasswordPlaceholder')"
@@ -24,16 +26,18 @@
           id="confirmPassword"
           v-model="confirmPassword"
           type="password"
+          autocomplete="new-password"
           class="reset-input"
           required
           :placeholder="t('reset.confirmPasswordPlaceholder')"
           @blur="validateField('confirmPassword')"
         />
         <div v-if="errors.confirmPassword" class="input-error">{{ errors.confirmPassword }}</div>
-        <button class="reset-btn" type="submit">{{ t('reset.submit') }}</button>
+        <button class="reset-btn" type="submit" :disabled="submitting">{{ t('reset.submit') }}</button>
         <div class="register-tip">
           {{ t('reset.remembered') }}
-          <router-link to="/login">{{ t('register.logIn') }}</router-link>
+          <a v-if="useCnAccount" href="https://wristo.cn/account">{{ t('register.logIn') }}</a>
+          <router-link v-else :to="login">{{ t('register.logIn') }}</router-link>
         </div>
       </form>
     </div>
@@ -44,6 +48,8 @@
 import { ref, reactive, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
+import { isChinaSso } from '@/config/region'
+import { recoveryContext } from '@/utils/passwordRecovery'
 import { verifyResetToken, resetPassword } from '@/api/auth'
 import BrandLogo from '@/components/BrandLogo.vue'
 import { useI18n } from '@/i18n'
@@ -51,12 +57,19 @@ import { useI18n } from '@/i18n'
 const router = useRouter()
 const route = useRoute()
 const { t } = useI18n()
+const context = recoveryContext(route.query.flow)
+const locale = route.params.lang || context.locale
+const prefix = typeof locale === 'string' ? `/${locale}` : ''
+const login = { path: `${prefix}/auth`, query: context.query }
+const forgot = { path: `${prefix}/forgot-password`, query: context.query }
+const useCnAccount = isChinaSso && !context.query.redirect_uri
 const loading = ref(true)
+const submitting = ref(false)
 const tokenValid = ref(false)
 const password = ref('')
 const confirmPassword = ref('')
 const errors = reactive({ password: '', confirmPassword: '' })
-const token = ref('')
+const token = typeof route.query.token === 'string' ? route.query.token : ''
 
 function validateField(field: string) {
   if (field === 'password') {
@@ -83,20 +96,16 @@ function validateAll() {
 }
 
 async function validateToken() {
-  token.value = route.query.token as string || ''
-  if (!token.value) {
+  if (!token) {
     tokenValid.value = false
     loading.value = false
-    setTimeout(() => router.push('/forgot-password'), 1800)
     return
   }
   try {
-    const res = await verifyResetToken(token.value)
-    console.log(res)
+    const res = await verifyResetToken(token)
     tokenValid.value = res.code === 0 && res.data === true
-  } catch (e) {
+  } catch {
     tokenValid.value = false
-    setTimeout(() => router.push('/forgot-password'), 1800)
   } finally {
     loading.value = false
   }
@@ -107,15 +116,17 @@ onMounted(() => {
 })
 
 const handleReset = async () => {
-  if (!validateAll()) return
+  if (submitting.value || !validateAll()) return
+  submitting.value = true
   try {
-    await resetPassword(token.value, password.value)
+    await resetPassword(token, password.value)
     ElMessage.success(t('reset.success'))
-    setTimeout(() => {
-      router.push('/auth')
-    }, 1200)
-  } catch (error: any) {
-    console.error('reset-password submit error', error)
+    if (useCnAccount) window.location.replace('https://wristo.cn/account')
+    else await router.replace(login)
+  } catch {
+    // The API client displays request errors.
+  } finally {
+    submitting.value = false
   }
 }
 </script>
@@ -159,7 +170,7 @@ const handleReset = async () => {
   margin-top: 40px;
 }
 .reset-form {
-  width: 370px;
+  width: min(370px, calc(100vw - 32px));
   display: flex;
   flex-direction: column;
   gap: 10px;

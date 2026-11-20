@@ -53,6 +53,7 @@
           <template v-if="!binding && loginMode === 'password'">
             <label for="cn-password">密码</label>
             <input id="cn-password" v-model="password" type="password" autocomplete="current-password" maxlength="256" required :disabled="busy" />
+            <router-link class="forgot-link" :to="forgotPasswordRoute(route)">忘记密码？</router-link>
           </template>
           <template v-else>
             <label for="cn-code">邮箱验证码</label>
@@ -107,6 +108,7 @@
   </section>
 </template>
 <script setup lang="ts">
+import { forgotPasswordRoute } from '@/utils/passwordRecovery'
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { cnRequest, emailSignIn, passwordSignIn, type SocialSignInResult } from '@/api/cnAuth'
@@ -322,6 +324,7 @@ async function submit() {
 }
 </script>
 <style scoped>
+.forgot-link { align-self: flex-end; font-size: 0.875rem; text-decoration: underline; }
 .cn-auth {
   color-scheme: light;
   width: 100%;

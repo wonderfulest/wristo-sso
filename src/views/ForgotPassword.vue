@@ -8,16 +8,21 @@
         id="email"
         v-model="email"
         type="email"
+        autocomplete="email"
         class="forgot-input"
         required
         :placeholder="t('forgot.emailPlaceholder')"
+        :disabled="loading"
+        @input="sent = false"
         @blur="validateField('email')"
       />
       <div v-if="errors.email" class="input-error">{{ errors.email }}</div>
-      <button class="forgot-btn" type="submit">{{ t('forgot.sendResetEmail') }}</button>
+      <button class="forgot-btn" type="submit" :disabled="loading || sent">{{ t('forgot.sendResetEmail') }}</button>
+      <p v-if="sent" role="status">{{ t('forgot.resetSent') }}</p>
       <div class="register-tip">
         {{ t('forgot.hasAccount') }}
-        <router-link to="/login">{{ t('register.logIn') }}</router-link>
+        <a v-if="isChinaSso && !login.query.redirect_uri" href="https://wristo.cn/account">{{ t('register.logIn') }}</a>
+        <router-link v-else :to="login">{{ t('register.logIn') }}</router-link>
       </div>
     </form>
   </div>
@@ -25,13 +30,18 @@
 
 <script setup lang="ts">
 import { ref, reactive } from 'vue'
-import { useRouter } from 'vue-router'
-import { ElMessage } from 'element-plus'
+import { useRoute } from 'vue-router'
+import { isChinaSso } from '@/config/region'
+import { randomVerifier } from '@/utils/cnLogin'
+import { recoveryLoginQuery, recoveryRoute, saveRecoveryContext } from '@/utils/passwordRecovery'
 import { requestResetPassword } from '@/api/auth'
 import BrandLogo from '@/components/BrandLogo.vue'
 import { useI18n } from '@/i18n'
 
-const router = useRouter()
+const route = useRoute()
+const login = recoveryRoute(route, '/auth', recoveryLoginQuery(route.query))
+const loading = ref(false)
+const sent = ref(false)
 const { t } = useI18n()
 const email = ref('')
 const errors = reactive({ email: '' })
@@ -54,15 +64,17 @@ function validateAll() {
 }
 
 const handleForgot = async () => {
-  if (!validateAll()) return
+  if (loading.value || sent.value || !validateAll()) return
+  loading.value = true
+  const flowId = randomVerifier()
   try {
-    await requestResetPassword(email.value)
-    ElMessage.success(t('forgot.resetSent'))
-    setTimeout(() => {
-      router.push('/auth')
-    }, 1200)
-  } catch (error: any) {
-    console.error('forgot-password request error', error)
+    await requestResetPassword(email.value.trim(), flowId)
+    saveRecoveryContext(flowId, route)
+    sent.value = true
+  } catch {
+    // The API client displays request errors.
+  } finally {
+    loading.value = false
   }
 }
 </script>
@@ -98,7 +110,7 @@ html, body {
   text-align: center;
 }
 .forgot-form {
-  width: 370px;
+  width: min(370px, calc(100vw - 32px));
   display: flex;
   flex-direction: column;
   gap: 10px;

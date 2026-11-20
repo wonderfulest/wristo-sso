@@ -65,7 +65,7 @@ test('password and code sign-in exchange their token for the correct PKCE client
   const calls = []
   const exports = {}
   let token = 'email-session'
-  vm.runInNewContext(output, { exports, Error, require: name => name === 'axios' ? { default: {
+  vm.runInNewContext(output, { exports, Error, document: { visibilityState: 'hidden' }, require: name => name === 'axios' ? { default: {
     create: () => ({ request: async config => {
       calls.push(config)
       return { data: { code: 200, data: config.url === '/sso/login' ? 'authorization-code' : { token } } }

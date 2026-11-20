@@ -58,6 +58,7 @@
           :disabled="loading"
         />
 
+        <router-link class="forgot-link" :to="forgotPasswordRoute(route)">{{ t('auth.forgotPassword') }}</router-link>
         <button class="submit-btn" type="submit" :disabled="!canPasswordLogin">
           {{ loading ? t('auth.loggingIn') : t('auth.continue') }}
         </button>
@@ -120,6 +121,7 @@
 </template>
 
 <script setup lang="ts">
+import { forgotPasswordRoute } from '@/utils/passwordRecovery'
 import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useRoute } from 'vue-router'
@@ -456,6 +458,7 @@ function onCodeInput() {
 </script>
 
 <style scoped>
+.forgot-link { align-self: flex-end; font-size: 0.875rem; text-decoration: underline; }
 html, body {
   min-height: 100%;
 }

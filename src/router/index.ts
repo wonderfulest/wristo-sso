@@ -31,8 +31,8 @@ const baseRoutes: RouteRecordRaw[] = [
   },
   // Legacy routes redirect to /auth
   { path: '/login', redirect: to => ({ path: '/auth', query: to.query }) },
-  { path: '/forgot-password', redirect: to => ({ path: '/auth', query: to.query }) },
-  { path: '/reset-password', redirect: to => ({ path: '/auth', query: to.query }) },
+  { path: '/forgot-password', component: () => import('@/views/ForgotPassword.vue'), meta: { requiresAuth: false } },
+  { path: '/reset-password', component: () => import('@/views/ResetPassword.vue'), meta: { requiresAuth: false } },
 ]
 
 const localizedRoutes: RouteRecordRaw[] = baseRoutes

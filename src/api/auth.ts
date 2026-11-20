@@ -1,3 +1,4 @@
+import { isChinaSso } from '@/config/region'
 import instance from '@/config/axios'
 import type { ApiResponse, LoginVO, EmailSendCodeDTO, EmailVerifyCodeDTO } from '@/types/api'
 
@@ -71,8 +72,8 @@ export const resetPasswordByCode = (dto: ResetPasswordByCodeDTO): Promise<ApiRes
 }
 
 // Legacy password reset flow (kept for compatibility with existing pages)
-export const requestResetPassword = (email: string): Promise<ApiResponse<boolean>> => {
-  return instance.post('/public/auth/reset-password/request', { email })
+export const requestResetPassword = (email: string, flowId: string): Promise<ApiResponse<boolean>> => {
+  return instance.post('/public/auth/reset-password/request', { email, chinaSso: isChinaSso, flowId })
 }
 
 export const verifyResetToken = (token: string): Promise<ApiResponse<boolean>> => {
