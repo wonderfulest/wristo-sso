@@ -59,8 +59,18 @@ function setCookieLocale(locale: SupportedLocale) {
   document.cookie = `${SHARED_LOCALE_KEY}=${encodeURIComponent(locale)}; Path=/; Max-Age=${maxAge}; SameSite=Lax${secure}`
 }
 
+function getBrowserLocale(): SupportedLocale {
+  if (typeof navigator !== 'undefined') {
+    for (const language of [...(navigator.languages || []), navigator.language]) {
+      const locale = getRouteLocaleParam(language?.split('-')[0])
+      if (locale) return locale
+    }
+  }
+  return DEFAULT_LOCALE
+}
+
 export function getStoredLocale(): SupportedLocale {
-  if (typeof localStorage === 'undefined') return DEFAULT_LOCALE
+  if (typeof localStorage === 'undefined') return getBrowserLocale()
   const local = readLocaleValue(localStorage.getItem(SHARED_LOCALE_KEY))
   if (local) return local
 
@@ -79,19 +89,7 @@ export function getStoredLocale(): SupportedLocale {
     }
   }
 
-  return DEFAULT_LOCALE
-}
-
-const localeStorage = {
-  getItem: () => {
-    const locale = getStoredLocale()
-    return JSON.stringify({ currentLocale: locale })
-  },
-  setItem: (_key: string, value: string) => {
-    const locale = readLocaleValue(value) || DEFAULT_LOCALE
-    localStorage.setItem(SHARED_LOCALE_KEY, locale)
-    setCookieLocale(locale)
-  },
+  return getBrowserLocale()
 }
 
 export const useLocaleStore = defineStore('locale', {
@@ -121,9 +119,5 @@ export const useLocaleStore = defineStore('locale', {
         document.documentElement.lang = this.currentLocale
       }
     },
-  },
-  persist: {
-    key: SHARED_LOCALE_KEY,
-    storage: localeStorage,
   },
 })

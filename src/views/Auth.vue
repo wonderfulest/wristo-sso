@@ -48,15 +48,31 @@
         <div v-if="errors.email" class="input-error">{{ errors.email }}</div>
 
         <label class="auth-label" for="password">{{ t('auth.password') }}</label>
-        <input
-          id="password"
-          v-model="password"
-          type="password"
-          class="auth-input"
-          autocomplete="current-password"
-          required
-          :disabled="loading"
-        />
+        <div class="password-field">
+          <input
+            id="password"
+            v-model="password"
+            :type="passwordVisible ? 'text' : 'password'"
+            class="auth-input"
+            autocomplete="current-password"
+            required
+            :disabled="loading"
+          />
+          <button
+            class="password-toggle"
+            type="button"
+            :aria-label="t('auth.showPassword')"
+            :aria-pressed="passwordVisible"
+            aria-controls="password"
+            @click="passwordVisible = !passwordVisible"
+          >
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true">
+              <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z" />
+              <circle cx="12" cy="12" r="3" />
+              <path v-if="passwordVisible" d="m3 3 18 18" />
+            </svg>
+          </button>
+        </div>
 
         <router-link class="forgot-link" :to="forgotPasswordRoute(route)">{{ t('auth.forgotPassword') }}</router-link>
         <button class="submit-btn" type="submit" :disabled="!canPasswordLogin">
@@ -145,6 +161,7 @@ const { t } = useI18n()
 const loginMode = ref<LoginMode>(readStoredLoginMode())
 const email = ref('')
 const password = ref('')
+const passwordVisible = ref(false)
 const code = ref('')
 const loading = ref(false)
 const codeState = ref<CodeState>('idle')
@@ -252,6 +269,7 @@ onMounted(async () => {
 })
 
 function switchMode(mode: LoginMode) {
+  passwordVisible.value = false
   loginMode.value = mode
   saveLoginMode(mode)
   errors.email = ''
@@ -641,6 +659,31 @@ html, body {
   outline: none;
   transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
   box-sizing: border-box;
+}
+
+.password-field {
+  position: relative;
+}
+
+.password-field .auth-input {
+  padding-right: 48px;
+}
+
+.password-field input::-ms-reveal {
+  display: none;
+}
+
+.password-toggle {
+  position: absolute;
+  inset: 2px 2px 2px auto;
+  width: 44px;
+  display: grid;
+  place-items: center;
+  color: #47615a;
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  cursor: pointer;
 }
 
 .auth-input:focus {

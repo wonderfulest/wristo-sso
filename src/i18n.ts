@@ -1,5 +1,5 @@
 import { computed } from 'vue'
-import { getStoredLocale, useLocaleStore, type SupportedLocale } from '@/store/locale'
+import { getRouteLocaleParam, getStoredLocale, useLocaleStore, type SupportedLocale } from '@/store/locale'
 
 const en = {
   'language.selector': 'Language selector',
@@ -15,6 +15,7 @@ const en = {
   'auth.or': 'or',
   'auth.email': 'Email address',
   'auth.password': 'Password',
+  'auth.showPassword': 'Show password',
   'auth.continue': 'Continue',
   'auth.loggingIn': 'Logging in...',
   'auth.emailLoginTitle': 'Continue with email',
@@ -229,6 +230,7 @@ const messages: Record<SupportedLocale, Messages> = {
     'auth.or': '或',
     'auth.email': '邮箱地址',
     'auth.password': '密码',
+    'auth.showPassword': '显示密码',
     'auth.continue': '继续',
     'auth.loggingIn': '正在登录...',
     'auth.emailLoginTitle': '邮箱登录',
@@ -344,6 +346,7 @@ const messages: Record<SupportedLocale, Messages> = {
     'auth.or': 'oder',
     'auth.email': 'E-Mail-Adresse',
     'auth.password': 'Passwort',
+    'auth.showPassword': 'Passwort anzeigen',
     'auth.continue': 'Fortfahren',
     'auth.loggingIn': 'Anmeldung lauft...',
     'auth.loginWithCode': 'Mit Bestatigungscode anmelden',
@@ -412,6 +415,7 @@ const messages: Record<SupportedLocale, Messages> = {
     'auth.or': 'o',
     'auth.email': 'Correo electronico',
     'auth.password': 'Contrasena',
+    'auth.showPassword': 'Mostrar contraseña',
     'auth.continue': 'Continuar',
     'auth.loggingIn': 'Iniciando sesion...',
     'auth.loginWithCode': 'Iniciar sesion con codigo',
@@ -480,6 +484,7 @@ const messages: Record<SupportedLocale, Messages> = {
     'auth.or': 'ou',
     'auth.email': 'Adresse e-mail',
     'auth.password': 'Mot de passe',
+    'auth.showPassword': 'Afficher le mot de passe',
     'auth.continue': 'Continuer',
     'auth.loggingIn': 'Connexion...',
     'auth.loginWithCode': 'Connexion avec code de verification',
@@ -548,6 +553,7 @@ const messages: Record<SupportedLocale, Messages> = {
     'auth.or': 'o',
     'auth.email': 'Indirizzo email',
     'auth.password': 'Password',
+    'auth.showPassword': 'Mostra password',
     'auth.continue': 'Continua',
     'auth.loggingIn': 'Accesso in corso...',
     'auth.loginWithCode': 'Accedi con codice di verifica',
@@ -614,7 +620,7 @@ function formatMessage(template: string, params?: Record<string, string | number
 }
 
 export function translateMessage(key: MessageKey, params?: Record<string, string | number>) {
-  const locale = getStoredLocale()
+  const locale = (typeof document !== 'undefined' && getRouteLocaleParam(document.documentElement.lang)) || getStoredLocale()
   const value = messages[locale]?.[key] || messages.en[key] || key
   return formatMessage(value, params)
 }

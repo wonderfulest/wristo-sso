@@ -40,13 +40,7 @@ const languageLabels: Record<string, string> = {
   zh: '中文',
 }
 
-const currentLocale = computed(() => {
-  const p = route.params.lang
-  const fromParam = Array.isArray(p) ? p[0] : (typeof p === 'string' ? p : undefined)
-  const q = route.query.lang
-  const fromQuery = Array.isArray(q) ? (q[0] ?? undefined) : (typeof q === 'string' && q ? q : undefined)
-  return normalizeLocale(fromParam || fromQuery || localeStore.currentLocale)
-})
+const currentLocale = computed(() => localeStore.currentLocale)
 
 function switchLanguage(targetLang: string) {
   const locale = normalizeLocale(targetLang)

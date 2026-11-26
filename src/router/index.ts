@@ -1,7 +1,7 @@
 import { isChinaSso } from '@/config/region'
 import { createRouter, createWebHistory } from 'vue-router'
 import type { RouteRecordRaw } from 'vue-router'
-import { getRouteLocaleParam, SUPPORTED_LOCALES, useLocaleStore } from '@/store/locale'
+import { getStoredLocale, getRouteLocaleParam, SUPPORTED_LOCALES, useLocaleStore } from '@/store/locale'
 
 const langPattern = SUPPORTED_LOCALES.join('|')
 
@@ -71,13 +71,8 @@ router.beforeEach((to, _from, next) => {
   const localeStore = useLocaleStore()
   const routeLang = Array.isArray(to.params.lang) ? to.params.lang[0] : to.params.lang
   const normalizedRouteLang = getRouteLocaleParam(routeLang)
-  if (isChinaSso) {
-    localeStore.setLocale('zh')
-  } else if (normalizedRouteLang && normalizedRouteLang !== localeStore.currentLocale) {
-    localeStore.setLocale(normalizedRouteLang)
-  } else {
-    localeStore.syncDocumentLang()
-  }
+  localeStore.currentLocale = isChinaSso ? 'zh' : normalizedRouteLang || getStoredLocale()
+  localeStore.syncDocumentLang()
 
   if (to.meta.requiresAuth === false) {
     next()
