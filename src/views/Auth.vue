@@ -1,63 +1,29 @@
 <template>
   <div class="auth-page">
-    <BrandLogo class="auth-logo" />
-    <div class="auth-context">{{ clientLabel }}</div>
-    <h1 class="auth-heading">{{ t('auth.title') }}</h1>
-    <p class="auth-subtitle">{{ t('auth.subtitle') }}</p>
-
-    <div class="auth-card">
-      <button class="google-btn" type="button" :disabled="loading" @click="handleGoogleLogin">
-        <svg class="google-icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
-          <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/>
-          <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-          <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
-          <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-        </svg>
-        {{ t('auth.google') }}
-      </button>
-
-      <button v-if="appleConfigured" class="google-btn apple-btn" type="button"
-        :disabled="loading || !appleAttempt" @click="handleAppleLogin">
-        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="currentColor">
-          <path d="M17.05 12.54c.03 3.23 2.83 4.3 2.86 4.31-.02.08-.45 1.54-1.48 3.05-.9 1.3-1.83 2.6-3.3 2.63-1.45.03-1.92-.85-3.58-.85-1.65 0-2.17.82-3.55.88-1.42.05-2.51-1.41-3.41-2.71-1.85-2.67-3.27-7.54-1.37-10.84.94-1.64 2.62-2.68 4.44-2.71 1.39-.03 2.7.94 3.55.94.85 0 2.45-1.16 4.13-.99.7.03 2.67.28 3.93 2.13-.1.06-2.35 1.37-2.32 4.16zM14.33 4.5c.75-.91 1.26-2.17 1.12-3.43-1.08.04-2.39.72-3.17 1.63-.69.79-1.29 2.05-1.13 3.26 1.2.09 2.43-.61 3.18-1.46z" />
-        </svg>
-        {{ t('auth.apple') }}
-      </button>
-
-      <div class="divider">
-        <span class="divider-text">{{ t('auth.or') }}</span>
+    <header class="brand">
+      <img src="/brand/wristo-logo-horizontal.svg" alt="Wristo" />
+      <span>{{ clientLabel }}</span>
+    </header>
+    <section class="auth-card" aria-labelledby="auth-title">
+      <h1 id="auth-title">{{ t('auth.title') }}</h1>
+      <p>{{ t(clientLabel === 'Wristo Store' ? 'auth.storeSubtitle' : 'auth.subtitle') }}</p>
+      <div class="tabs">
+        <button type="button" :aria-pressed="loginMode === 'password'" :disabled="loading" @click="switchMode('password')">{{ t('auth.passwordTab') }}</button>
+        <button type="button" :aria-pressed="loginMode === 'code'" :disabled="loading" @click="switchMode('code')">{{ t('auth.codeTab') }}</button>
       </div>
-
-      <form v-if="loginMode === 'password'" class="auth-form" @submit.prevent="handlePasswordLogin">
-        <div class="method-copy">
-          <h2>{{ t('auth.passwordLoginTitle') }}</h2>
-          <p>{{ t('auth.passwordLoginHint') }}</p>
+      <form @submit.prevent="loginMode === 'password' ? handlePasswordLogin() : handleVerify()">
+        <div class="field">
+          <label for="email">{{ t('auth.email') }}</label>
+          <input id="email" v-model="email" type="email" placeholder="name@example.com" autocomplete="username" required :disabled="loading" @blur="validateField('email')" />
+          <div v-if="errors.email" class="input-error" role="alert">{{ errors.email }}</div>
         </div>
-
-        <label class="auth-label" for="email">{{ t('auth.email') }}</label>
-        <input
-          id="email"
-          v-model="email"
-          type="email"
-          class="auth-input"
-          autocomplete="username"
-          required
-          :disabled="loading"
-          @blur="validateField('email')"
-        />
-        <div v-if="errors.email" class="input-error">{{ errors.email }}</div>
-
-        <label class="auth-label" for="password">{{ t('auth.password') }}</label>
-        <div class="password-field">
-          <input
-            id="password"
-            v-model="password"
-            :type="passwordVisible ? 'text' : 'password'"
-            class="auth-input"
-            autocomplete="current-password"
-            required
-            :disabled="loading"
-          />
+        <div v-if="loginMode === 'password'" class="field">
+          <div class="row">
+            <label for="password">{{ t('auth.password') }}</label>
+            <router-link :to="forgotPasswordRoute(route)">{{ t('auth.forgotPassword') }}</router-link>
+          </div>
+          <div class="inside">
+            <input id="password" v-model="password" :type="passwordVisible ? 'text' : 'password'" :placeholder="t('auth.passwordPrompt')" autocomplete="current-password" required :disabled="loading" />
           <button
             class="password-toggle"
             type="button"
@@ -72,67 +38,41 @@
               <path v-if="passwordVisible" d="m3 3 18 18" />
             </svg>
           </button>
+          </div>
         </div>
-
-        <router-link class="forgot-link" :to="forgotPasswordRoute(route)">{{ t('auth.forgotPassword') }}</router-link>
-        <button class="submit-btn" type="submit" :disabled="!canPasswordLogin">
-          {{ loading ? t('auth.loggingIn') : t('auth.continue') }}
+        <div v-else class="field">
+          <label for="code">{{ t('auth.verificationCode') }}</label>
+          <div class="inside">
+            <input id="code" v-model="code" autocomplete="one-time-code" inputmode="numeric" maxlength="6" :placeholder="t('auth.codePlaceholder')" required :disabled="loading" @input="onCodeInput" @blur="validateField('code')" />
+            <button type="button" :disabled="!canSendCode" @click="handleSendCode">{{ sendCodeLabel }}</button>
+          </div>
+          <div v-if="errors.code" class="input-error" role="alert">{{ errors.code }}</div>
+        </div>
+        <button class="submit" type="submit" :disabled="loginMode === 'password' ? !canPasswordLogin : !canVerify">
+          {{ t(loading ? 'auth.loggingIn' : 'auth.signInAction') }}
         </button>
-
-        <div class="helper-row">
-          <a href="javascript:void(0)" @click="switchMode('code')">{{ t('auth.loginWithCode') }}</a>
-        </div>
       </form>
+      <div class="divider">{{ t('auth.otherMethods') }}</div>
+      <div class="social">
+      <button class="google-btn" type="button" :disabled="loading" @click="handleGoogleLogin">
+        <svg class="google-icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+          <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/>
+          <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+          <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+          <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+        </svg>
+        Google
+      </button>
 
-      <!-- Email code login -->
-      <form v-else class="auth-form" @submit.prevent="handleVerify">
-        <div class="method-copy">
-          <h2>{{ t('auth.emailLoginTitle') }}</h2>
-          <p>{{ t('auth.emailLoginHint') }}</p>
-        </div>
-
-        <label class="auth-label" for="email2">{{ t('auth.email') }}</label>
-        <input
-          id="email2"
-          v-model="email"
-          type="email"
-          class="auth-input"
-          autocomplete="username"
-          required
-          :disabled="loading"
-          @blur="validateField('email')"
-        />
-        <div v-if="errors.email" class="input-error">{{ errors.email }}</div>
-
-        <button class="send-code-btn" type="button" :disabled="!canSendCode" @click="handleSendCode">
-          {{ sendCodeLabel }}
-        </button>
-
-        <label class="auth-label" for="code">{{ t('auth.verificationCode') }}</label>
-        <div class="code-row">
-          <input
-            id="code"
-            v-model="code"
-            inputmode="numeric"
-            maxlength="6"
-            class="auth-input code-input"
-            :placeholder="t('auth.codePlaceholder')"
-            required
-            :disabled="loading"
-            @input="onCodeInput"
-            @blur="validateField('code')"
-          />
-          <button class="verify-btn" type="submit" :disabled="!canVerify">
-            {{ loading ? t('auth.verifying') : t('auth.continue') }}
-          </button>
-        </div>
-        <div v-if="errors.code" class="input-error">{{ errors.code }}</div>
-
-        <div class="helper-row">
-          <a href="javascript:void(0)" @click="switchMode('password')">{{ t('auth.loginWithPassword') }}</a>
-        </div>
-      </form>
-    </div>
+      <button v-if="appleConfigured" class="google-btn apple-btn" type="button"
+        :disabled="loading || !appleAttempt" @click="handleAppleLogin">
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="currentColor">
+          <path d="M17.05 12.54c.03 3.23 2.83 4.3 2.86 4.31-.02.08-.45 1.54-1.48 3.05-.9 1.3-1.83 2.6-3.3 2.63-1.45.03-1.92-.85-3.58-.85-1.65 0-2.17.82-3.55.88-1.42.05-2.51-1.41-3.41-2.71-1.85-2.67-3.27-7.54-1.37-10.84.94-1.64 2.62-2.68 4.44-2.71 1.39-.03 2.7.94 3.55.94.85 0 2.45-1.16 4.13-.99.7.03 2.67.28 3.93 2.13-.1.06-2.35 1.37-2.32 4.16zM14.33 4.5c.75-.91 1.26-2.17 1.12-3.43-1.08.04-2.39.72-3.17 1.63-.69.79-1.29 2.05-1.13 3.26 1.2.09 2.43-.61 3.18-1.46z" />
+        </svg>
+        Apple
+      </button>
+      </div>
+    </section>
   </div>
 </template>
 
@@ -143,7 +83,6 @@ import { ElMessage } from 'element-plus'
 import { useRoute } from 'vue-router'
 import { getSsoSession, sendEmailCode, ssoLogin } from '@/api/auth'
 import { useUserStore } from '@/store/user'
-import BrandLogo from '@/components/BrandLogo.vue'
 import { translateApiMessage, useI18n } from '@/i18n'
 import { prepareAppleAttempt, appleCredential } from '@/utils/appleSignIn'
 import { resolveSsoClientId } from '@/utils/ssoClient'
@@ -279,9 +218,9 @@ function switchMode(mode: LoginMode) {
 function readStoredLoginMode(): LoginMode {
   try {
     const storedMode = localStorage.getItem(LOGIN_MODE_STORAGE_KEY)
-    return storedMode === 'password' || storedMode === 'code' ? storedMode : 'code'
+    return storedMode === 'code' ? 'code' : 'password'
   } catch {
-    return 'code'
+    return 'password'
   }
 }
 
@@ -334,7 +273,7 @@ const sendCodeLabel = computed(() => {
   if (sendCooldown.value > 0) {
     return t('auth.resendCodeSeconds', { seconds: sendCooldown.value })
   }
-  return codeState.value === 'code_sent' ? t('auth.resendEmailCode') : t('auth.sendEmailCode')
+  return codeState.value === 'code_sent' ? t('auth.resendEmailCode') : t('auth.sendCode')
 })
 
 function startCooldown() {
@@ -476,348 +415,58 @@ function onCodeInput() {
 </script>
 
 <style scoped>
-.forgot-link { align-self: flex-end; font-size: 0.875rem; text-decoration: underline; }
-html, body {
-  min-height: 100%;
+*{box-sizing:border-box}
+.auth-page{margin:0; background:#f5f7f5; color:#18241e; font:15px/1.5 system-ui,sans-serif}
+.brand{height:76px; display:flex; align-items:center; gap:18px; padding:0 6vw; border-bottom:1px solid #dce4de; background:white}
+.brand img{width:106px}
+.brand span{border-left:1px solid #cdd8d0; padding-left:18px; color:#4d6055; font-weight:600}
+.auth-card{margin:clamp(24px,7vh,72px) auto; width:min(448px,100%); background:white; padding:36px 38px; border:1px solid #dce4de; border-radius:18px}
+h1{font-size:32px; letter-spacing:-1px; margin:0}
+p{color:#59675e; margin:5px 0 24px}
+.tabs,.social{display:flex; gap:6px}
+.tabs{background:#eff3f0; padding:4px; border-radius:10px; margin-bottom:22px}
+button,input{font:inherit}
+button{cursor:pointer}
+.tabs button,.social button{flex:1}
+.tabs button{border:0; background:transparent; border-radius:7px; height:39px; color:#53655b}
+.tabs [aria-pressed="true"]{background:white; color:#085944; font-weight:650; box-shadow:0 1px 4px #14352921}
+label,.row{display:flex; align-items:center; justify-content:space-between; font-size:14px; font-weight:600; margin-bottom:7px}
+.row label{margin:0}
+input{width:100%; border:1px solid #becbc2; border-radius:8px; height:47px; padding:0 12px; background:white}
+input::placeholder{color:#778179}
+.field{margin-bottom:17px}
+.row a{background:none; border:0; color:#11674e; font-size:13px}
+.inside svg{width:19px}
+.submit{width:100%; border:0; border-radius:8px; height:47px; background:#09664e; color:white; font-weight:650; margin-top:4px}
+.divider{display:flex; align-items:center; gap:12px; color:#69766d; font-size:12px; margin:24px 0 16px}
+.divider:after,.divider:before{content:""; height:1px; background:#dde5df; flex:1}
+.social{gap:10px}
+.social button{display:flex; align-items:center; justify-content:center; gap:9px; height:44px; border-radius:8px; border:1px solid #ccd5ce; background:white; font-weight:600}
+.social .apple-btn{background:#171918; color:white; border-color:#171918}
+.social svg{width:18px}
+@media(max-width:540px){.auth-page{background:white}
+.brand{height:66px; padding:0 24px}
+.auth-card{padding:0 24px; border:0; margin:36px auto}
+h1{font-size:29px}
 }
 
-.auth-page {
-  min-height: 100%;
-  flex: 1 0 auto;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  padding: 12px 20px 28px;
-  box-sizing: border-box;
-}
+.auth-page { flex: 1;  color-scheme: light;  text-align: left;  }
 
-@media (max-width: 600px) {
-  .auth-page {
-    padding: 18px 16px 26px;
-  }
-}
+.inside { display: flex;  align-items: center;  border: 1px solid #becbc2;  border-radius: 8px;  }
 
-.auth-logo {
-  margin-bottom: 12px;
-}
+.inside:focus-within { outline: 2px solid #09664e;  outline-offset: 1px;  }
 
-.auth-context {
-  color: #0f6b68;
-  font-size: 0.78rem;
-  font-weight: 800;
-  letter-spacing: 0;
-  line-height: 1.2;
-  margin-bottom: 8px;
-  text-align: center;
-  text-transform: uppercase;
-}
+.inside input { flex: 1;  min-width: 0;  border: 0;  outline: none;  height: 45px;  }
 
-.auth-heading {
-  color: #111817;
-  font-size: clamp(2rem, 6vw, 2.35rem);
-  font-weight: 800;
-  line-height: 1.06;
-  margin: 0;
-  text-align: center;
-}
+.inside button { display: grid;  place-items: center;  color: #11674e;  background: transparent;  border: 0;  padding: 0 12px;  min-height: 44px;  font-size: 13px;  }
 
-.auth-subtitle {
-  color: #596460;
-  font-size: 1rem;
-  line-height: 1.55;
-  margin: 10px auto 16px;
-  max-width: 360px;
-  text-align: center;
-}
+input { color: #18241e;  font-size: 16px;  }
 
-.auth-card {
-  width: 420px;
-  max-width: calc(100vw - 40px);
-  background: rgba(255, 255, 255, 0.96);
-  border: 1px solid #dfe7e4;
-  border-radius: 8px;
-  box-shadow: 0 24px 70px rgba(24, 38, 34, 0.12);
-  box-sizing: border-box;
-  padding: 20px;
-}
+button:disabled { cursor: default;  opacity: .72;  }
 
-.google-btn {
-  width: 100%;
-  min-height: 48px;
-  border-radius: 8px;
-  padding: 12px 16px;
-  border: 1px solid #cfd9d5;
-  background: #fff;
-  font-size: 1rem;
-  font-weight: 750;
-  cursor: pointer;
-  color: #1c2623;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
-}
+button:focus-visible, a:focus-visible { outline: 2px solid #09664e;  outline-offset: 2px;  }
 
-.google-btn:hover {
-  background: #f7faf9;
-  border-color: #9db2aa;
-  box-shadow: 0 8px 20px rgba(24, 38, 34, 0.08);
-}
+.input-error { color: #a42621;  font-size: 13px;  margin-top: 4px;  }
 
-.google-btn:active {
-  transform: translateY(1px);
-}
-
-.google-btn:disabled {
-  cursor: not-allowed;
-  opacity: 0.6;
-}
-
-.apple-btn {
-  margin-top: 12px;
-  background: #000;
-  border-color: #000;
-  color: #fff;
-}
-
-.apple-btn:hover {
-  background: #222;
-  border-color: #222;
-}
-
-.google-icon {
-  flex-shrink: 0;
-}
-
-.divider {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin: 18px 0;
-}
-
-.divider::before,
-.divider::after {
-  content: '';
-  flex: 1;
-  height: 1px;
-  background: #e6e8ea;
-}
-
-.divider-text {
-  font-size: 0.82rem;
-  color: #74817c;
-  font-weight: 700;
-  text-transform: uppercase;
-}
-
-.auth-form {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.method-copy {
-  margin-bottom: 2px;
-  text-align: left;
-}
-
-.method-copy h2 {
-  color: #17201d;
-  font-size: 1.08rem;
-  font-weight: 800;
-  line-height: 1.25;
-  margin: 0;
-}
-
-.method-copy p {
-  color: #596460;
-  font-size: 0.92rem;
-  line-height: 1.45;
-  margin: 6px 0 2px;
-}
-
-.auth-label {
-  color: #24312d;
-  font-size: 0.9rem;
-  font-weight: 750;
-  margin-top: 8px;
-  text-align: left;
-}
-
-.auth-input {
-  width: 100%;
-  min-height: 48px;
-  padding: 12px 14px;
-  border: 1px solid #cdd9d5;
-  border-radius: 8px;
-  font-size: 1rem;
-  color: #17201d;
-  background: #fbfdfc;
-  outline: none;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
-  box-sizing: border-box;
-}
-
-.password-field {
-  position: relative;
-}
-
-.password-field .auth-input {
-  padding-right: 48px;
-}
-
-.password-field input::-ms-reveal {
-  display: none;
-}
-
-.password-toggle {
-  position: absolute;
-  inset: 2px 2px 2px auto;
-  width: 44px;
-  display: grid;
-  place-items: center;
-  color: #47615a;
-  background: transparent;
-  border: 0;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-.auth-input:focus {
-  border-color: #0f6b68;
-  background: #fff;
-  box-shadow: 0 0 0 4px rgba(15, 107, 104, 0.13);
-}
-
-.submit-btn,
-.send-code-btn {
-  min-height: 48px;
-  margin-top: 10px;
-  width: 100%;
-  background: #0f6b68;
-  color: #fff;
-  font-size: 1rem;
-  font-weight: 800;
-  border: none;
-  border-radius: 8px;
-  padding: 12px 16px;
-  cursor: pointer;
-  transition: background 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
-}
-
-.submit-btn:hover,
-.send-code-btn:hover {
-  background: #0b5553;
-  box-shadow: 0 10px 22px rgba(15, 107, 104, 0.22);
-}
-
-.submit-btn:active,
-.send-code-btn:active,
-.verify-btn:active {
-  transform: translateY(1px);
-}
-
-.submit-btn:disabled,
-.send-code-btn:disabled {
-  background: #9aa6a2;
-  box-shadow: none;
-  cursor: not-allowed;
-}
-
-.code-row {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-}
-
-.code-input {
-  flex: 1;
-}
-
-.verify-btn {
-  min-width: 112px;
-  min-height: 48px;
-  background: #0f6b68;
-  color: #fff;
-  font-size: 1rem;
-  font-weight: 800;
-  border: none;
-  border-radius: 8px;
-  padding: 12px 14px;
-  cursor: pointer;
-  transition: background 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
-}
-
-.verify-btn:hover {
-  background: #0b5553;
-  box-shadow: 0 10px 22px rgba(15, 107, 104, 0.22);
-}
-
-.verify-btn:disabled {
-  background: #9aa6a2;
-  box-shadow: none;
-  cursor: not-allowed;
-}
-
-.helper-row {
-  margin-top: 10px;
-  text-align: center;
-  font-size: 1rem;
-}
-
-.helper-row a {
-  color: #0f6b68;
-  text-decoration: none;
-  font-weight: 750;
-}
-
-.helper-row a:hover {
-  text-decoration: underline;
-}
-
-.input-error {
-  color: #b42318;
-  font-size: 0.9rem;
-  font-weight: 650;
-  line-height: 1.4;
-  margin-top: -2px;
-  text-align: left;
-}
-
-button:focus-visible,
-.auth-input:focus-visible {
-  outline: 3px solid rgba(15, 107, 104, 0.28);
-  outline-offset: 2px;
-}
-
-@media (max-width: 600px) {
-  .auth-card {
-    max-width: 100%;
-    padding: 18px;
-  }
-
-  .auth-heading {
-    font-size: 2rem;
-  }
-
-  .code-row {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .verify-btn {
-    width: 100%;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    transition-duration: 0.01ms !important;
-  }
-}
+:global(.main-content:has(> .auth-page)) { max-width: none;  padding: 0;  }
 </style>
